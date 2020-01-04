@@ -2,6 +2,9 @@ extends Resource
 
 class_name GGInternal
 
+const _EMPTY_CONTEXT = "This is a workaround GDScript's limitations:" +\
+  " instances of user classes cannot be assigned to const (nor anything like 'Symbol' from JS exists)"
+
 func crash_(msg: String) -> void:
 	print("crash:", msg)
 	assert(false)
@@ -24,7 +27,38 @@ func init_(arr: Array):
 	r.pop_back()
 	return r
 
+func map_fn_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> Array:
+	var r:= []
+	for x in arr: r.push_back(call_f1_w_ctx(f, x, ctx))
+	return r
+
+func map_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> Array: return map_fn_(arr, f_like_to_func(f), ctx)
+
+func filter_fn_(arr: Array, predicate, ctx = _EMPTY_CONTEXT) -> Array:
+	var r:= []
+	for x in arr: if call_f1_w_ctx(predicate, x, ctx): r.push_back(x)
+	return r
+
+func filter_(arr: Array, predicate, ctx = _EMPTY_CONTEXT) -> Array: return filter_fn_(arr, f_like_to_func(predicate), ctx)
+
+func foldl_fn_(arr: Array, f: FuncRef, zero, ctx = _EMPTY_CONTEXT):
+	var r = zero
+	for x in arr: r = call_f2_w_ctx(f, r, x, ctx)
+	return r
+
+func foldl_(arr: Array, f, zero, ctx = _EMPTY_CONTEXT): return foldl_fn_(arr, f_like_to_func(f), zero, ctx)
+
 func get_fld_(obj, field_name: String): return obj[field_name]
+
+func get_fld_or_else_(obj, field_name: String, default):
+	if obj == null || field_name == null: return default
+	if obj is Dictionary:
+		if !obj.has(field_name): return default
+	else:
+		if !field_name in obj: return default
+	return obj[field_name]
+
+func get_fld_or_null_(obj, field_name: String): return get_fld_or_else_(obj, field_name, null)
 
 func size_(x):
 	if x is Array: return x.size()
@@ -69,6 +103,8 @@ func fst_(pair: Array): return pair[0]
 
 func snd_(pair: Array): return pair[1]
 
+func eq_(a, b) -> bool: return a == b
+
 func eqd_(a, b) -> bool:
 	# TODO: better?
 	return to_json(a) == to_json(b)
@@ -99,6 +135,7 @@ func function_expr_to_script_(expr: String) -> String:
 var _function_cache = {}
 
 # context?
+# body support? e.g. "x => { print(x); return x + 1 }"
 
 func function_(expr: String) -> FuncRef:
 	var scr
@@ -109,3 +146,130 @@ func function_(expr: String) -> FuncRef:
 		scr = compile_script_(src)
 		_function_cache[expr] = scr
 	return funcref(scr, "f")
+
+func sample_or_null_(arr: Array):
+	if arr.size() == 0: return null
+	return arr[randi() % arr.size()]
+
+func sample_(arr: Array):
+	assert_(arr.size() != 0, "Expecting non-empty array")
+	return sample_or_null_(arr)
+
+func flatten_(xs: Array) -> Array:
+	var res:= []
+	for ys in xs:
+		assert_(ys is Array, "flatten: all items in an Array must be of type Array")
+		res += ys
+	return res
+
+func take_(xs: Array, n: int) -> Array:
+	var res:= []
+	for i in range(0, min(xs.size(), n)): res.push_back(xs[i])
+	return res
+
+func take_right_(xs: Array, n: int) -> Array:
+	var res:= []
+	for i in range(max(0, xs.size() - n), xs.size()): res.push_back(xs[i])
+	return res
+
+func drop_(xs: Array, n: int) -> Array:
+	var res:= []
+	for i in range(clamp(n, 0, xs.size()), xs.size()): res.push_back(xs[i])
+	return res
+
+func drop_right_(xs: Array, n: int) -> Array:
+	var res:= []
+	for i in range(0, clamp(xs.size() - n, 0, xs.size())): res.push_back(xs[i])
+	return res
+
+func f_like_to_func(f):
+	if f is FuncRef: return f
+	elif f is CtxFRef1 || f is CtxFRef2: return f
+	elif f is String: return function_(f)
+	elif f is Array: return CtxFRef1.new(f_like_to_func(f[0]), f[1])
+	crash_("Unexpected function-like input: %s" % f)
+
+func reverse_(xs: Array) -> Array:
+	var r = xs.duplicate()
+	r.invert()
+	return r
+
+func pipe_(input, functions: Array, options = null):
+	var r = input
+	var debug_print = get_fld_or_else_(options, "print", false)
+	var step = 0
+	if debug_print: print("[GG] pipe: input = %s" % input)
+	for f in functions:
+		r = f_like_to_func(f).call_func(r)
+		step += 1
+		if debug_print: print("[GG] pipe: step = %s, value = %s" % [step, r])
+	return r
+
+func is_empty_ctx(x) -> bool: return x is String and x == _EMPTY_CONTEXT
+
+func call_f0_w_ctx(f, ctx = _EMPTY_CONTEXT): return f.call_func() if is_empty_ctx(ctx) else f.call_func(ctx)
+func call_f1_w_ctx(f, x, ctx = _EMPTY_CONTEXT): return f.call_func(x) if is_empty_ctx(ctx) else f.call_func(x, ctx)
+func call_f2_w_ctx(f, x, y, ctx = _EMPTY_CONTEXT):
+	return f.call_func(x, y) if is_empty_ctx(ctx) else f.call_func(x, y, ctx)
+
+func tap_(x, f):
+	f_like_to_func(f).call_func(x)
+	return x
+
+func sum_(xs: Array) -> int:
+	var r:= 0
+	for x in xs: r += x
+	return r
+
+func product_(xs: Array) -> int:
+	var r:= 1
+	for x in xs: r *= x
+	return r
+
+func all_(xs: Array, p) -> bool:
+	var r:= true
+	p = f_like_to_func(p)
+	for x in xs: r = r && p.call_func(x)
+	return r
+
+func any_(xs: Array, p) -> bool:
+	var r:= false
+	p = f_like_to_func(p)
+	for x in xs: r = r || p.call_func(x)
+	return r
+
+func without_(xs: Array, y) -> Array:
+	var r:= []
+	for x in xs: if x != y: r.push_back(x)
+	return r
+
+func compact_(xs: Array) -> Array: return without_(xs, null)
+
+func append_(xs: Array, y) -> Array:
+	var r:= xs.duplicate()
+	r.push_back(y)
+	return r
+
+func prepend_(xs: Array, y) -> Array:
+	var r:= xs.duplicate()
+	r.push_front(y)
+	return r
+
+func concat_(xs: Array, ys: Array) -> Array: return xs + ys
+
+func concat_left_(xs: Array, ys: Array) -> Array: return ys + xs
+
+func call_spread_(f: FuncRef, arr: Array):
+	match arr.size():
+		0: return f.call_func()
+		1: return f.call_func(arr[0])
+		2: return f.call_func(arr[0], arr[1])
+		3: return f.call_func(arr[0], arr[1], arr[2])
+		4: return f.call_func(arr[0], arr[1], arr[2], arr[3])
+		5: return f.call_func(arr[0], arr[1], arr[2], arr[3], arr[4])
+		6: return f.call_func(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5])
+		7: return f.call_func(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6])
+		8: return f.call_func(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
+		9: return f.call_func(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7], arr[8])
+		10: return f.call_func(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7], arr[8], arr[9])
+		_: push_error("call_spreaded doesn't support this number of arguments")
