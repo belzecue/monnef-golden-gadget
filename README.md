@@ -34,7 +34,7 @@ Examples
 * array utilities known from other dynamic and/or functional languages. Golden Gagdet also contains an array wrapper with fluent API (see first screenshot) to streamline working with arrays. some examples:
   * FP classics: `map`, `filter`, `foldl` (aka `reduce`)
   * chopping: `head`, `tail`, `last`, `init`, `take`, `take_right`, `drop`, `drop_right`
-  * gluing: `append`, `prepend`, `concat`, `concat_right`
+  * gluing: `append`, `prepend`, `concat`, `concat_left`
   * `sort`, `zip`, `reverse` (aka `inverse`)
   * `flatten`: flattens one level of array of arrays, e.g. `[[1, 2], [3]]` -> `[1, 2, 3]`
   * `without`: remove all occurrences of given value from an array
@@ -54,7 +54,7 @@ Notes
 ---
 All functions should be documented (either in main file or wrapper). If you want to see what those functions are doing, you can peek at the test file (brief explanation of *test cases* is at the end of the test file).
 
-While I tried optimized most functions, using this library will probably lead to worse performance compared to native solutions (e.g. using `for`s, mutable variables). But looking at the future - when JIT arrives, differences in performance might not be significant. Generally, I would not recommend building too many wrappers in `_process` and `_physics_process` especially if you are targeting mobile platforms.
+While I tried to optimize most functions, using this library will probably lead to worse performance compared to native solutions (e.g. using `for`s, mutable variables). It is a price for nice abstractions. But looking at the future - when JIT arrives, differences in performance might not be significant. Generally, I would not recommend building too many wrappers (`arr`, `G`) in `_process` and `_physics_process` especially if you are targeting mobile platforms. (You can use most functions directly from `GG` without an array wrapper.)
 
 🗒 License
 ---
