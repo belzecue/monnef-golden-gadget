@@ -13,6 +13,7 @@ func run() -> void:
 	var start = OS.get_ticks_msec()
 	_test_wrap()
 	_test_map()
+	_test_for_each()
 	_test_join()
 	_test_filter()
 	_test_fold()
@@ -37,6 +38,8 @@ func run() -> void:
 	_test_tap()
 	_test_sum_product()
 	_test_insertion_concatenation()
+	_test_array_generators()
+	_test_batch_field_access()
 	var stop = OS.get_ticks_msec()
 	print("[GG] Golden Gadget Tests: SUCCESS in %.3fs (%s - %s)" % [(stop - start)/1000.0, start, stop])
 
@@ -93,6 +96,7 @@ func _test_map() -> void:
 	assert(G([{x = 1}]).map("x => x.x").val == [1])
 	assert(GG.map_([{x = 1}], funcref(self, "_get_x")) == [1])
 	assert(GG.map_([{x = 1}], "x => x.x") == [1])
+	assert(G([1, 2]).map("x => x + 1").val == [2, 3])
 
 	# map with ctx
 	assert(G([{x = 1}, {a = 4, x = 2}]).map(funcref(self, "_get_x_and_add"), 10).val == [11, 12])
@@ -116,9 +120,45 @@ func _test_map() -> void:
 	# map_in_mtd with ctx
 	assert(G([T0.new(3)]).map_in_mtd("get_x_and_add", 10).val == [13])
 
+	# map_fld
+	_assert(G([{name = "Spock"}, {name = "Scotty"}]).map_fld("name").val, ["Spock", "Scotty"])
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_for_each() -> void:
+	var a1 = [{ x = 0 }, { x = 1 }, { x = 2 }]
+	GG.for_each_(a1, "x -> x.x *= 10")
+	_assert(a1, [{ x = 0 }, { x = 10 }, { x = 20 }])
+
+	var a2 = [{ x = 0 }, { x = 1 }, { x = 2 }]
+	GG.for_each_(a2, funcref(self, "_set_x_to_69"))
+	_assert(a2, [{ x = 69 }, { x = 69 }, { x = 69 }])
+
+	var a3 = [{ x = 0 }, { x = 1 }, { x = 2 }]
+	GG.for_each_(a3, funcref(self, "_set_x"), 72)
+	_assert(a3, [{ x = 72 }, { x = 72 }, { x = 72 }])
+
+	var a4 = [{ x = 0 }, { x = 1 }, { x = 2 }]
+	G(a4).for_each("x->x.x*=8")
+	_assert(a4, [{ x = 0 }, { x = 8 }, { x = 16 }])
+
+	var a5 = [{ x = 0 }, { x = 1 }, { x = 2 }]
+	G(a5).for_each(funcref(self, "_mult_x_and_set"), 16)
+	_assert(a5, [{ x = 0 }, { x = 16 }, { x = 32 }])
+
+	# G(["Firefly", "Daedalus"]).for_each("x -> print(x)")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 func _get_x(x): return x.x
 
 func _get_x_and_add(x, y): return x.x + y
+
+func _set_x(obj, val): obj.x = val
+
+func _set_x_to_69(obj): obj.x = 69
+
+func _mult_x_and_set(obj, x): obj.x *= x
 
 class T0:
 	var _x: int
@@ -134,6 +174,7 @@ class T0:
 # ----------------------------------------------------------------------------------------------------------------------
 
 func _test_join() -> void:
+	# join
 	assert(G([]).join(" ") == "")
 	assert(G([]).join() == "")
 	assert(G(["GG"]).join(" ") == "GG")
@@ -141,6 +182,12 @@ func _test_join() -> void:
 	assert(G(["Golden", "Gadget"]).join(" ") == "Golden Gadget")
 	assert(G(["a", "b"]).join(" ", "<", ">") == "<a b>")
 	assert(G([1, 2, 3]).join(", ", "<", ">") == "<1, 2, 3>")
+	_assert(GG.join_([1, 2, 3], ", ", "<", ">"), "<1, 2, 3>")
+	_assert(GG.join.call_func([1, 2, 3], ", ", "<", ">"), "<1, 2, 3>")
+	_assert(G(["Dog", "Cat", "Frog"]).join(", "), "Dog, Cat, Frog")
+
+	# join_w
+	assert(G([1, 2, 3]).join_w(", ", "<", ">").val == ["<1, 2, 3>"])
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -194,14 +241,18 @@ func _test_filter() -> void:
 		.map_in_mtd("get_x")\
 		.val == [0, 2]
 	)
+	_assert(G([{enabled = true, id = 0}, {enabled = false, id = 1}, {enabled = true, id = 2}]).filter_by_fld("enabled").map_fld("id").val, [0, 2])
 
 	# filter_by_fld_val
 	assert(G([]).filter_by_fld_val("_x", 0).size == 0)
 	assert(G([{}]).filter_by_fld_val("_x", 0).size == 0)
 	assert(G([T0.new(0, false)]).filter_by_fld_val("_x", 0).size == 1)
 	assert(G([T0.new(0, false), T0.new(1, false)]).filter_by_fld_val("b", false).size == 2)
+	_assert(G([{id = 0, name = "Zero"}, {id = 1, name = "One"}]).filter_by_fld_val("id", 1).map_fld("name").val, ["One"])
 
+	# find_by_fld_val
 	assert(G([T0.new(-1, true), T0.new(0, false), T0.new(1, false)]).find_by_fld_val("b", false).get_x() == 0)
+	_assert(G([{id = 0, name = "Zero"}, {id = 1, name = "One"}]).find_by_fld_val("id", 1).name, "One")
 
 func _is_2(x) -> bool: return x == 2
 func _gte_2(x) -> bool: return x >= 2
@@ -223,6 +274,7 @@ func _test_fold() -> void:
 
 	# foldl
 	_assert(G([1, 2, 3]).foldl(funcref(self, "add"), -6), 0)
+	_assert(G([1, 2, 3]).foldl("a, x => a + x", -6), 0)
 	_assert(GG.foldl_([1, 2, 3], funcref(self, "add"), -6), 0)
 	_assert(GG.foldl_([1, 2, 3], "x , y => x + y", -6), 0)
 
@@ -318,7 +370,38 @@ func _test_utils() -> void:
 	_test_func_a(size_cases, GG.size)
 	_test_func_a(size_cases, funcref(GG, "size_"))
 
+	var fmt_bool_cases = \
+	[ [true, "true"]
+	, [false, "false"]
+	]
+	_test_func_a(fmt_bool_cases, GG.fmt_bool)
+	_test_func_a(fmt_bool_cases, funcref(GG, "fmt_bool_"))
+
 func _test_array() -> void:
+	# is_empty
+	var is_empty_cases = \
+	[ [[], true]
+	, [[0], false]
+	, [[null], false]
+	, [[[]], false]
+	, [[0, 1], false]
+	]
+	_test_arr_func_a(is_empty_cases, "_get_is_empty")
+	_assert(G([]).is_empty, true)
+	_assert(G([1]).is_empty, false)
+
+	# size
+	var size_cases = \
+	[ [[], 0]
+	, [[0], 1]
+	, [[null], 1]
+	, [[[]], 1]
+	, [[0, 1], 2]
+	]
+	_test_arr_func_a(size_cases, "_get_size")
+	_assert(G([]).size, 0)
+	_assert(G([null, []]).size, 2)
+
 	# head
 	var head_cases = [
 		[[], null],
@@ -375,6 +458,7 @@ func _test_array() -> void:
 		[[1], ["a"], [[1, "a"]]],
 		[[1, 2], ["a", "b"], [[1, "a"], [2, "b"]]],
 		[[1], ["a", "b"], [[1, "a"]]],
+		[[1, 2], ["a"], [[1, "a"]]],
 	]
 	_test_func_a(zip_cases, GG.zip)
 	_test_func_a(zip_cases, funcref(GG, "zip_"))
@@ -621,6 +705,11 @@ func _test_math() -> void:
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+func _const_1_(): return 1
+var _const_1 = funcref(self, "_const_1_")
+func _const_0_(): return 0
+var _const_0 = funcref(self, "_const_0_")
+
 func _test_bool() -> void:
 	_assert(GG.negate.call_func(true), false)
 	_assert(GG.negate_(false), true)
@@ -644,6 +733,20 @@ func _test_bool() -> void:
 	]
 	_test_func_a(or_cases, GG.l_or)
 	_test_func_a(or_cases, funcref(GG, "l_or_"))
+
+	var bool_cases = \
+	[ [t, 0, 1, 1]
+	, [f, 0, 1, 0]
+	]
+	_test_func_a(bool_cases, GG.bool__)
+	_test_func_a(bool_cases, funcref(GG, "bool_"))
+
+	var bool_lazy_cases = \
+	[ [t, "invalid_arg => 0", "=> 1", 1]
+	, [f, _const_0, _const_1, 0]
+	]
+	_test_func_a(bool_lazy_cases, GG.bool_lazy)
+	_test_func_a(bool_lazy_cases, funcref(GG, "bool_lazy_"))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -761,6 +864,11 @@ func _test_pairs() -> void:
 func _test_function_utils() -> void:
 	_assert(GG.ap_if_defined_({}, "get_x_and_add", []), null)
 	_assert(GG.ap_if_defined_(T0.new(3), "get_x_and_add", [2]), 5)
+	_assert(GG.ap_if_defined_(GG, "add_", [2, 5]), 7)
+
+	_assert(GG.const_(1).call_func("Gorn"), 1)
+	_assert(GG.const__.call_func(1).call_func("Gorn"), 1)
+	_assert(GG.const_("Resistance is futile!").call_func("Resist!"), "Resistance is futile!")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -781,13 +889,15 @@ func g(): return funcref(self, "f")
 
 func _test_lambdas() -> void:
 	var parse_fn_cases = [
-		["x => 1", ["x", "1"]],
-		["x=>x", ["x", "x"]],
-		["DoggO:Object,Action:String=>Conan", ["DoggO:Object,Action:String", "Conan"]],
-		["x, y => x + y", ["x, y", "x + y"]],
-		["a, b, c => a.a * b.b - c.c()", ["a, b, c", "a.a * b.b - c.c()"]],
-		["a: float, b: int,c:string=>a+b+c", ["a: float, b: int,c:string", "a+b+c"]],
-		["a: float => a", ["a: float", "a"]]
+		["x => 1", ["x", "=>", "1"]],
+		["x=>x", ["x", "=>", "x"]],
+		["DoggO:Object,Action:String=>Conan", ["DoggO:Object,Action:String", "=>", "Conan"]],
+		["x, y => x + y", ["x, y", "=>", "x + y"]],
+		["a, b, c => a.a * b.b - c.c()", ["a, b, c", "=>", "a.a * b.b - c.c()"]],
+		["a: float, b: int,c:string=>a+b+c", ["a: float, b: int,c:string", "=>", "a+b+c"]],
+		["a: float => a", ["a: float", "=>", "a"]],
+		["a -> a.x = 0", ["a", "->", "a.x = 0"]],
+		["=> 0", ["", "=>", "0"]]
 	]
 	_test_func_a(parse_fn_cases, funcref(GG.GGI, "parse_fn"))
 
@@ -799,6 +909,15 @@ func _test_lambdas() -> void:
 
 	_assert(F_raw("x => x.b").call_func({b = true}), true)
 	_assert(F_raw("x => x.b").call_func(T0.new(0, true)), true)
+
+	var o1 = { x = 0 }
+	_assert(o1, { x = 0 })
+	GG.GGI.function_("a -> a.x = 72").call_func(o1)
+	_assert(o1, { x = 72 })
+	GG.GGI.function_("a:   Dictionary  ->  a.x  =  42  ").call_func(o1)
+	_assert(o1, { x = 42 })
+	GG.GGI.function_("a:Dictionary->a.x=69").call_func(o1)
+	_assert(o1, { x = 69 })
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -830,15 +949,27 @@ func _test_flatten() -> void:
 # ----------------------------------------------------------------------------------------------------------------------
 
 func _test_func_compostition_utils() -> void:
+	# pipe
 	var pipe_cases = \
 	  [ [null, [], null]
 	  , [true, [GG.id], true]
 	  , ["spock", [GG.capitalize], "Spock"]
 	  , [[1, 2], [[GG.take, 1], "xs => xs[0] * 10"], 10]
 	  , [-1, ["x => x + 4", GG.with_ctx(GG.multiply, 2), GG.id, funcref(GG, "id_")], 6]
+	  , [0, [GG.inc, GG.inc], 2]
 	  ]
 	_test_func_a(pipe_cases, GG.pipe)
 	_test_func_a(pipe_cases, funcref(GG, "pipe_"))
+
+	# flow
+	_assert(GG.flow_([]).call_func(null), null)
+	_assert(GG.flow_([GG.id]).call_func("Dante"), "Dante")
+	_assert(GG.flow_([GG.capitalize]).call_func("dante"), "Dante")
+	_assert(GG.flow_([[GG.take, 1], "x => x[0] * 10"]).call_func([1, 2]), 10)
+	var flow_complex = GG.flow_(["x => x + 4", GG.with_ctx(GG.multiply, 2), GG.id, funcref(GG, "id_")])
+	_assert(flow_complex.call_func(-1), 6)
+	_assert(flow_complex.call_func(-3), 2)
+	_assert(GG.flow_([flow_complex, flow_complex]).call_func(10), 64)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -865,6 +996,7 @@ func _test_sum_product() -> void:
 	  [ [[], 0]
 	  , [[1], 1]
 	  , [[3, 4], 7]
+	  , [[2, 3, 5], 10]
 	  ]
 	_test_func_a(sum_cases, GG.sum)
 	_test_func_a(sum_cases, funcref(GG, "sum_"))
@@ -874,6 +1006,7 @@ func _test_sum_product() -> void:
 	  [ [[], 1]
 	  , [[1], 1]
 	  , [[3, 4], 12]
+	  , [[2, 3, 5], 30]
 	  ]
 	_test_func_a(product_cases, GG.product)
 	_test_func_a(product_cases, funcref(GG, "product_"))
@@ -959,9 +1092,71 @@ func _test_insertion_concatenation() -> void:
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+func _test_array_generators() -> void:
+	var replicate_cases = \
+	[ [0, 0, []]
+	, [1, 2, [1, 1]]
+	, ["a", 1, ["a"]]
+	, ["a", -4, []]
+	]
+	_test_func_a(replicate_cases, GG.replicate)
+	_test_func_a(replicate_cases, funcref(GG, "replicate_"))
+
+	var new_array_cases = \
+	[ [0, [], []]
+	, [0, [1], [0]]
+	, [0, [3], [0, 0, 0]]
+	, [0, [1, 1], [[0]]]
+	, [ 0, [1, 2], [[0, 0]] ]
+	, [ 0, [3, 2, 3], [  [[0,0,0],[0,0,0]], [[0,0,0],[0,0,0]], [[0,0,0],[0,0,0]]  ] ]
+	, [ "x", [2, 3], [["x", "x", "x"], ["x", "x", "x"]] ]
+	, [2, [4, 3, 2], [[[2,2],[2,2],[2,2]],[[2,2],[2,2],[2,2]],[[2,2],[2,2],[2,2]],[[2,2],[2,2],[2,2]]] ]
+	, [ 2, [4, 3, 2, 1], [[[[2],[2]],[[2],[2]],[[2],[2]]],[[[2],[2]],[[2],[2]],[[2],[2]]],[[[2],[2]],[[2],[2]],[[2],[2]]],[[[2],[2]],[[2],[2]],[[2],[2]]]] ]
+	]
+	_test_func_a(new_array_cases, GG.new_array)
+	_test_func_a(new_array_cases, funcref(GG, "new_array_"))
+
+	var generate_array_cases = \
+	[ [GG.id, [], []]
+	, [GG.id, [1], [[0]] ]
+	, ["x => x", [3], [[0], [1], [2]] ]
+	, ["x => x[0] * 10 + x[1]", [2, 3], [  [0, 1, 2], [10, 11, 12]  ] ]
+	, ["x => str(x[0]) + \"x\" + str(x[1])", [3, 2], [  ["0x0", "0x1"], ["1x0", "1x1"], ["2x0", "2x1"]  ] ]
+	]
+	_test_func_a(generate_array_cases, GG.generate_array)
+	_test_func_a(generate_array_cases, funcref(GG, "generate_array_"))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_batch_field_access() -> void:
+	# get_fields
+
+	var dict = {x = 2, y = true}
+	var dict_vals = GG.get_fields_(dict, ["x", "y"])
+	_assert(dict_vals, [2, true])
+	var dict_vals2 = GG.get_fields.call_func(dict, ["x", "y"])
+	_assert(dict_vals2, [2, true])
+
+	var obj = T0.new(2, true)
+	var obj_vals = GG.get_fields_(obj, ["_x", "b"])
+	_assert(obj_vals, [2, true])
+	var obj_vals2 = GG.get_fields.call_func(obj, ["_x", "b"])
+	_assert(obj_vals2, [2, true])
+
+	# set_fields
+	GG.set_fields_(dict, [69, false], ["x", "y"])
+	_assert(dict.x, 69)
+	_assert(dict.y, false)
+
+	GG.set_fields_(obj, [22, false], ["_x", "b"])
+	_assert(dict.x, 69)
+	_assert(dict.y, false)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 func _test_short_example() -> void:
 	var monsters = [
-		Monster.new(0, "Orc"),
+		Monster.new(0, "Orc"), # hp, name
 		Monster.new(5, "Demon"),
 		Monster.new(12, "Amus"),
 		Monster.new(0, "Borg"),

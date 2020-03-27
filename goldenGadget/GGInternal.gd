@@ -5,9 +5,17 @@ class_name GGInternal
 const _EMPTY_CONTEXT = "This is a workaround GDScript's limitations:" +\
   " instances of user classes cannot be assigned to const (nor anything like 'Symbol' from JS exists)"
 
+func quit_() -> void:
+	var ml = Engine.get_main_loop()
+	if !ml || !ml.has_method("quit"):
+		print("Failed to get main loop (or it doesn't support quit method). Cannot use ordinary means of termination.")
+		assert(false)
+	else:
+		ml.quit()
+
 func crash_(msg: String) -> void:
 	print("crash:", msg)
-	assert(false)
+	quit_()
 
 func assert_(cond: bool, msg: String) -> void: if !cond: crash_(msg)
 
@@ -33,6 +41,13 @@ func map_fn_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> Array:
 	return r
 
 func map_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> Array: return map_fn_(arr, f_like_to_func(f), ctx)
+
+func for_each_fn_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> void: for x in arr: call_f1_w_ctx(f, x, ctx)
+
+func for_each_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> void: for_each_fn_(arr, f_like_to_func(f), ctx)
+
+func join_(arr: Array, delim: String = "", before: String = "", after: String = "") -> String:
+	return before + PoolStringArray(arr).join(delim) + after
 
 func filter_fn_(arr: Array, predicate, ctx = _EMPTY_CONTEXT) -> Array:
 	var r:= []
@@ -122,14 +137,15 @@ var lambda_regex
 func parse_fn(expr: String) -> Array:
 	if lambda_regex == null:
 		lambda_regex = RegEx.new()
-		lambda_regex.compile("^((?:[a-zA-Z_]+(?:\\s*:\\s*)?(?:\\s*,\\s*)?)*)\\s*=>\\s*(.*)$")
+		lambda_regex.compile("^((?:[a-zA-Z_]+(?:\\s*:\\s*)?(?:\\s*,\\s*)?)*)\\s*(->|=>)\\s*(.*)$")
 	var found = lambda_regex.search(expr)
 	if found == null: crash_("Failed to parse lambda expression: %s" % expr)
-	return [found.get_string(1), found.get_string(2)]
+	return [found.get_string(1), found.get_string(2), found.get_string(3)]
 
 func function_expr_to_script_(expr: String) -> String:
-	var parsed = parse_fn(expr); var args = parsed[0]; var body = parsed[1] # how I miss destructioning...
-	var src = "func f(%s):return %s" % [args, body]
+	var parsed = parse_fn(expr); var args = parsed[0]; var op = parsed[1]; var body = parsed[2] # how I miss destructuring...
+	var retPart = "return " if op == "=>" else ""
+	var src = "func f(%s):%s%s" % [args, retPart, body]
 	return src
 
 var _function_cache = {}
@@ -184,7 +200,7 @@ func drop_right_(xs: Array, n: int) -> Array:
 
 func f_like_to_func(f):
 	if f is FuncRef: return f
-	elif f is CtxFRef1 || f is CtxFRef2: return f
+	elif f is CtxFRef1 || f is CtxFRef2 || f is FlowF: return f
 	elif f is String: return function_(f)
 	elif f is Array: return CtxFRef1.new(f_like_to_func(f[0]), f[1])
 	crash_("Unexpected function-like input: %s" % f)
@@ -198,12 +214,14 @@ func pipe_(input, functions: Array, options = null):
 	var r = input
 	var debug_print = get_fld_or_else_(options, "print", false)
 	var step = 0
-	if debug_print: print("[GG] pipe: input = %s" % input)
+	if debug_print: print("[GG] pipe: input = %s" % [input])
 	for f in functions:
 		r = f_like_to_func(f).call_func(r)
 		step += 1
 		if debug_print: print("[GG] pipe: step = %s, value = %s" % [step, r])
 	return r
+
+func flow_(functions: Array): return FlowF.new(map_(functions, funcref(self, "f_like_to_func")))
 
 func is_empty_ctx(x) -> bool: return x is String and x == _EMPTY_CONTEXT
 
@@ -259,6 +277,11 @@ func concat_(xs: Array, ys: Array) -> Array: return xs + ys
 
 func concat_left_(xs: Array, ys: Array) -> Array: return ys + xs
 
+func replicate_(x, n: int) -> Array:
+	var r:= []
+	for i in range(n): r.push_back(x)
+	return r
+
 func call_spread_(f: FuncRef, arr: Array):
 	match arr.size():
 		0: return f.call_func()
@@ -273,3 +296,50 @@ func call_spread_(f: FuncRef, arr: Array):
 		9: return f.call_func(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7], arr[8])
 		10: return f.call_func(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7], arr[8], arr[9])
 		_: push_error("call_spreaded doesn't support this number of arguments")
+
+func is_empty_(xs: Array) -> bool: return xs.size() == 0
+
+func new_array_(x, dims: Array) -> Array:
+	if is_empty_(dims): return []
+	var cur_dim = last_(dims)
+	var res = replicate_(x, cur_dim)
+	var last_dim = dims.size() == 1
+	return res if last_dim else new_array_(res, init_(dims))
+
+func generate_array_(f, dims: Array) -> Array:
+	return _generate_array_(f_like_to_func(f), dims, [])
+
+func _generate_array_(f, dims: Array, coords: Array) -> Array:
+	if is_empty_(dims): return []
+	var cur_dim = head_(dims)
+	var last_dim = dims.size() == 1
+	if last_dim: return map_(range(cur_dim), "i, ctx => ctx[0].call_func(ctx[1] + [i])", [f, coords])
+	else:
+		return map_(range(cur_dim), "i, ctx => ctx[0].call_func(ctx[1], ctx[2], [i] + ctx[3])", [funcref(self, "_generate_array_"), f, tail_(dims), coords])
+
+func get_fields_(obj, field_names: Array) -> Array:
+	var r:= []
+	for f in field_names: r.push_back(obj[f])
+	return r
+
+func set_fields_(obj, values: Array, field_names: Array) -> void:
+	for i in range(field_names.size()): obj[field_names[i]] = values[i]
+
+func bool_(cond: bool, on_false, on_true): if cond: return on_true; else: return on_false
+
+func bool_lazy_(cond: bool, on_false, on_true): return bool_(cond, f_like_to_func(on_false), f_like_to_func(on_true)).call_func()
+
+func pause_one_(node: Node, value: bool) -> void:
+	node.set_process(!value)
+	node.set_physics_process(!value)
+	node.set_process_input(!value)
+	node.set_process_internal(!value)
+	node.set_process_unhandled_input(!value)
+	node.set_process_unhandled_key_input(!value)
+
+func pause_(node: Node, value: bool) -> void:
+	pause_one_(node, value)
+	for ch in node.get_children():
+		pause_(ch, value)
+
+func const_(x): return CtxFRef1.new(function_("a, b => b"), x)

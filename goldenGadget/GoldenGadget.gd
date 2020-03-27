@@ -9,7 +9,7 @@
 # Golden Gadget
 # GDScript utility library focused on functional programming (FP)
 #
-# version: 0.1.0 (2019-2020)
+# version: 0.2.0 (2019-2020)
 # author:  monnef
 # license: MIT
 # repo:    https://gitlab.com/monnef/golden-gadget
@@ -29,6 +29,11 @@
 # All examples presume "imports" above are present and autoloading is configured.
 # Nice examples are located in GGTests script at the end.
 
+## If some function is undocumented here (e.g. [[size_]]), please see documentation of [[GGArray]].
+## .
+## `FuncLike<A, B>` means function-like value which represents a function taking one argument of type `A` and returns value of type `B`.
+## @fileDocumentation
+
 tool
 extends Node
 
@@ -38,7 +43,11 @@ func _ready() -> void:
 	_words_splitter.compile("[^\\s]+")
 	_lines_splitter.compile("[^\n]+")
 
-# main wrapper function
+## Wraps `Array` into [[GGArray]].
+## @param arr {Array<T>} array to wrap
+## @return {GGArray<T>}  wrapped array
+## Recommended "import" (code at a start of a file we want to use the `arr` in):
+## `func G(arr) -> GGArray: return GG.arr(arr)`
 func arr(array) -> GGArray:
 	# TODO: support string via to_utf8?
 	return GGArray.new(array)
@@ -51,143 +60,194 @@ func with_ctx2(f: FuncRef, ctx) -> CtxFRef2: return CtxFRef2.new(f, ctx)
 
 # utility functions
 
+## Terminate/halt/quit program.
+func quit_() -> void: GGI.quit_()
+var quit = funcref(self, "quit_")
+
+## Assert condition is `true`, terminate program with error message otherwise.
 func assert_(cond: bool, msg: String) -> void: GGI.assert_(cond, msg)
 var assert__ = funcref(self, "assert_")
 
+## Terminate program with error message.
 func crash_(msg: String) -> void: GGI.crash_(msg)
 var crash = funcref(self, "crash_")
 
-# logical and
+## logical and
 func l_and_(x: bool, y: bool) -> bool: return x && y
 var l_and = funcref(self, "l_and_")
 
-# logical or
+## logical or
 func l_or_(x: bool, y: bool) -> bool: return x || y
 var l_or = funcref(self, "l_or_")
 
-# adds two values
+## adds two values
 func add_(x: int, y: int) -> int: return x + y
 var add = funcref(self, "add_")
 
-# subtracts second argument from first
+## subtracts second argument from first
 func subtract_(x: int, y: int) -> int: return x - y
 var subtract = funcref(self, "subtract_")
 
-# and operation performed on array of bools
+## `and` operation performed on array of bools
+## @param x {Array<bool>}
+## @return {bool}
 func a_and_(x: Array) -> bool: return arr(x).foldl_fn(l_and, true)
 var a_and = funcref(self, "a_and_")
 
-# or operation performed on array of bools
+## `or` operation performed on array of `bool`s
+## @param x {Array<bool>}
+## @return {bool}
 func a_or_(x: Array) -> bool: return arr(x).foldl_fn(l_or, false)
 var a_or = funcref(self, "a_or_")
 
-# shallow equality check
+## shallow equality check
 func eq_(a, b) -> bool: return GGI.eq_(a, b)
 var eq = funcref(self, "eq_")
 
-# shallow not-equality check
+## shallow not-equality check
 func neq_(a, b) -> bool: return !GGI.eq_(a, b)
 var neq = funcref(self, "neq_")
 
-# deep equality check
+## deep equality check
 func eqd_(a, b) -> bool: return GGI.eqd_(a, b)
 var eqd = funcref(self, "eqd_")
 
-# determines equality (==) of a field (given name and value in args parameter) in object (first parameter)
+## determines equality (==) of a field (given name and value in args parameter) in object (first parameter)
 func eq_field_(object, args) -> bool:
 	if object && args.name in object: return object[args.name] == args.value
 	return false
 var eq_field = funcref(self, "eq_field_")
 
+## Invoke a function with parameters given in array.
 func call_spread_(f: FuncRef, arr: Array): return GGI.call_spread_(f, arr)
 var call_spread = funcref(self, "call_spread_")
 
+## Convert string from snake to pascal case
 func snake_to_pascal_case_(x: String) -> String: return arr(x.split("_")).map_fn(capitalize).join("")
 var snake_to_pascal_case = funcref(self, "snake_to_pascal_case_")
 
+## Capitalize string - convert first character to upper case and all other to lower case.
 func capitalize_(x: String) -> String:
 	if x.length() == 0: return ""
 	return capitalize_first_(x[0]) + x.substr(1, x.length() - 1).to_lower()
 var capitalize = funcref(self, "capitalize_")
 
+## Capitalize first character of string (doesn't touch other characters).
 func capitalize_first_(x: String) -> String:
 	if x.length() == 0: return ""
 	var arr = x.to_utf8()
 	return x[0].to_upper() + PoolByteArray(tail_(arr)).get_string_from_utf8()
 var capitalize_first = funcref(self, "capitalize_first_")
 
+## Do nothing.
+## @param x {any}
 func noop1_(x) -> void: pass
 var noop1 = funcref(self, "noop1_")
 
+## Do nothing.
+## @param x {any}
+## @param y {any}
 func noop2_(x, y) -> void: pass
 var noop2 = funcref(self, "noop2_")
 
+## Do nothing.
+## @param x {any}
+## @param y {any}
+## @param z {any}
 func noop3_(x, y, z) -> void: pass
 var noop3 = funcref(self, "noop3_")
 
+## Do nothing.
+## @param x {any}
+## @param y {any}
+## @param z {any}
+## @param a {any}
 func noop4_(x, y, z, a) -> void: pass
 var noop4 = funcref(self, "noop4_")
 
+## Multiple two numbers.
 func multiply_(x, y): return x * y
 var multiply = funcref(self, "multiply_")
 
+## Calculate modulo of two numbers (of same type).
+## @param x {int | float} First number
+## @param y {int | float} Second number
+## @return {int | float}  Modulo of input numbers, has same type.
 func modulo_(x, y):
 	if x is float and y is float: return fmod(x, y)
 	elif x is int and y is int: return x % y
 var modulo = funcref(self, "modulo_")
 
+## Add one to a given number.
 func inc_(x): return x + 1
 var inc = funcref(self, "inc_")
 
+## Subtract one from a given number.
 func dec_(x): return x - 1
 var dec = funcref(self, "dec_")
 
+## Negate given number.
 func negate_num_(x): return -x
 var negate_num = funcref(self, "negate_num_")
 
+## Logic not.
 func negate_(x: bool) -> bool: return !x
 var negate = funcref(self, "negate_")
 
-# obj is either Dictionary (created via {}) or Object (e.g. a custom  class)
-# throws on missing field
+## Get a value in a given field.
+## @param obj {Object | Dictionary}
+## @param field_name {String}
+## @return {any}
+## Crashes on a missing field.
 func get_fld_(obj, field_name: String): return GGI.get_fld_(obj, field_name)
 var get_fld = funcref(self, "get_fld_")
 
-# obj is either Dictionary or Object
-# returns default when field is not found
+## Get a value in a given field. If the field is missing, return a given default value.
+## @param obj {Object | Dictionary}
+## @param field_name {String}
+## @param default {any}
+## @return {any}
 func get_fld_or_else_(obj, field_name: String, default): return GGI.get_fld_or_else_(obj, field_name, default)
 var  get_fld_or_else = funcref(self, "get_fld_or_else_")
 
-# obj is either Dictionary or Object
-# returns null when field is not found
+## Get a value in a given field. If the field is missing, return `null`.
+## @param obj {Object | Dictionary}
+## @param field_name {String}
+## @param default {any}
+## @return {any}
 func get_fld_or_null_(obj, field_name: String): return GGI.get_fld_or_null_(obj, field_name)
 var  get_fld_or_null = funcref(self, "get_fld_or_null_")
 
-# get first item in pair
+## Get a first item in a pair.
 func fst_(pair: Array): return GGI.fst_(pair)
 var fst = funcref(self, "fst_")
 
-# get second item in pair
+## Get a second item in a pair.
 func snd_(pair: Array): return GGI.snd_(pair)
 var snd = funcref(self, "snd_")
 
-# compile script and return new instance of it
+## Compile script and return new instance of it.
 func compile_script_(src: String): return GGI.compile_script_(src)
 var compile_script = funcref(self, "compile_script_")
 
-# compile script with one function, instantiate script and return funcref of the function
+## Compile a script with one function, instantiate the script and return a `funcref` of the function.
 func compile_function_(expr: String) -> FuncRef: return GGI.function_(expr)
 var compile_function = funcref(self, "compile_function_")
 
-# create function-like object depending on type of f
-# FuncRef - pass same value
-# String  - compiles function and returns its FuncRef
-#           "x => x + 1" ~ get FuncRef of "func f(x): return x + 1"
-# Array   - partial application (creates CtxFRef1)
-#           ["x, y => x + y", 1] which is functionally equivalent to "x => x + 1"
+## Create function-like object depending on type of `f`.
+## * `FuncRef` - pass same value
+## * `String` - compiles function and returns its `FuncRef`
+##              `"x => x + 1"` ~ get `FuncRef` of `func f(x): return x + 1`
+## * `Array` - partial application (creates `CtxFRef1`)
+##             `["x, y => x + y", 1]` which is functionally equivalent to `"x => x + 1"`
+## @param f {FuncRef | String | Array<any>}
+## @return {FuncRef | CtxFRef1}
 func F_(f): return GGI.f_like_to_func(f)
 
-# get keys of Dictionary or Object. returns Array of Strings
+## Get keys of `Dictionary` or `Object`.
+## @param obj {Dictionary | Object}
+## @return {Array<String>}
+## @example `GG.keys_({a = 1, b = 2})` returns `["a", "b"]`
 func keys_(obj):
 	if obj == null: return null
 	var is_dict = obj is Dictionary
@@ -196,7 +256,12 @@ func keys_(obj):
 	return obj.keys() if is_dict else arr(obj.get_property_list()).map_fld("name").val
 var keys = funcref(self, "keys_")
 
-# get key by given value, supports Dictionary and Object (custom classes). null if not found.
+## Get key by given value. Supports `Dictionary` and `Object` (custom classes).
+## @param obj {Dictionary | Object}
+## @param val {any}
+## @return {any | null} Returns `null` if value is not found.
+## Useful for finding a name of an enum item from an item value.
+## @example `GG.key_from_val_({a = 1, b = 2}, 1)` returns `"a"`.
 func key_from_val_(obj, val):
 	for key in keys_(obj):
 		if key in obj:
@@ -205,40 +270,57 @@ func key_from_val_(obj, val):
 	return null
 var key_from_val = funcref(self, "key_from_val_")
 
-# call method when method exists and pass result, otherwise null
-func ap_if_defined_(obj, method_name, args: Array):
+## Call a method when the method exists and return its result, otherwise return `null`.
+## @param obj {Object} Object owning the method
+## @param method_name {String} Object owning the method
+## @param args {Array<any>} Arguments to pass to the method
+## @return {any} What method returned, or `null` when `obj` is `null` or `obj` has no such method
+## @example `GG.ap_if_defined_(GG, "add_", [2, 5])` returns `7`
+## @example `GG.ap_if_defined_(GG, "_non_existing_method", [2, 5])` returns `null`
+func ap_if_defined_(obj, method_name: String, args: Array):
 	if obj && obj.has_method(method_name):
 		return call_spread_(funcref(obj, method_name), args)
 	return null
 var ap_if_defined = funcref(self, "ap_if_defined_")
 
-# get random item from an array
-# throws on empty array
+## Get a random item from an array.
+## @param arr {Array<T>} the input array
+## @return {T} a randomly picked item
+## @typeparam T {any}    type of items in the array
+## @example `sample_([1, 2])` returns `1` or `2` with equal chance
+## @example `sample_([])` crashes
+## Crashes on an empty array.
 func sample_(arr: Array): return GGI.sample_(arr)
 var sample = funcref(self, "sample_")
 
-# get random item from an array
-# returns null for empty array
+## Get a random item from an array.
+## @param arr {Array<T>} the input array
+## @return {T | null}    a random item, or null for an empty array
+## @typeparam T {any}    type of items in the array
+## @example `sample_or_null_([1, 2])` returns `1` or `2` with equal chance
+## @example `sample_or_null_([])` returns always `null`
 func sample_or_null_(arr: Array): return GGI.sample_or_null_(arr)
 var sample_or_null = funcref(self, "sample_or_null_")
 
-# format DateTime (if no provided current will be used) in following format: YYYY-MM-DD--HH-MM-SS
-# example: 2019-12-19--13-03-18
+## Format `DateTime` (if no provided, current will be used) in following format: `YYYY-MM-DD--HH-MM-SS`
+## @param date {DateTime | null}
+## @return {String}
+## @example Possible output: `"2019-12-19--13-03-18"`
 func format_datetime_(date = null) -> String:
 	if !date: date = OS.get_datetime()
 	return "%s-%02d-%02d--%02d-%02d-%02d" % [date.year, date.month, date.day, date.hour, date.minute, date.second]
 var format_datetime = funcref(self, "format_datetime_")
 
-# save screenshot
-# optinally takes an options dictionary:
-# quiet          - when true silence all console output
-# dir            - overrides screenshot directory (default is "user://screenshots", expanded for example like this: "/home/user/.local/share/godot/app_userdata/project/screenshots")
-# returns dictionary with following fields:
-# dir            - screenshot directory. Example: "/home/user/.local/share/godot/app_userdata/project/screenshots"
-# result         - Error code, use OK constant to test if taking screenshot was successful. Example: 12
-# stage          - last reached stage, either "create_dir" or "save". Example: "save"
-# file_name      - image file name (without directory). Example: "2019-12-19--13-20-35.png"
-# full_file_name - full path to screenshot file. Example: "/home/user/.local/share/godot/app_userdata/project/screenshots/2019-12-19--13-20-35.png"
+## Save a screenshot.
+## Optionally takes an options dictionary:
+## * `quiet`          - when true silence all console output
+## * `dir`            - overrides screenshot directory (default is `"user://screenshots"`, expanded for example like this: `"/home/user/.local/share/godot/app_userdata/project/screenshots"`)
+## Returns dictionary with following fields:
+## * `dir`            - screenshot directory. Example: `"/home/user/.local/share/godot/app_userdata/project/screenshots"`
+## * `result`         - Error code, use OK constant to test if taking screenshot was successful. Example: `12`
+## * `stage`          - last reached stage, either `"create_dir"` or `"save"`. Example: `"save"`
+## * `file_name`      - image file name (without directory). Example: `"2019-12-19--13-20-35.png"`
+## * `full_file_name` - full path to screenshot file. Example: `"/home/user/.local/share/godot/app_userdata/project/screenshots/2019-12-19--13-20-35.png"`
 func take_screenshot_(options: Dictionary = {}) -> Dictionary:
 	var quiet = get_fld_or_else_(options, "quiet", false)
 	var override_dir = get_fld_or_null_(options, "dir")
@@ -270,12 +352,24 @@ func take_screenshot_(options: Dictionary = {}) -> Dictionary:
 	return res
 var take_screenshot = funcref(self, "take_screenshot_")
 
+## Delete all children of a given parent (calls `queue_free` on children).
 func delete_children_(parent: Node) -> void:
 	for c in parent.get_children(): c.queue_free()
 var delete_children = funcref(self, "delete_children_")
 
-# safer `get_node` alternative which will crash when parent, path or node are null/empty
-func get_node_or_crash_(parent: Node, path: NodePath) -> Node:
+## Get recursively all children.
+## @param parent {Node}
+## @return {Array<Node>}
+func get_children_rec_(parent: Node) -> Array:
+	var children = parent.get_children()
+	return arr(children).map("x => [x]").append(arr(children).map(get_children_rec).flatten().val).flatten().val
+var get_children_rec = funcref(self, "get_children_rec_")
+
+## Safer `get_node` alternative which will crash when a parent, a path or a node are `null`/empty.
+## @param parent {Node | null}    Of which node we want to retrieve a child
+## @param path {NodePath | null}  Path to a child
+## @return {Node | null}          Child node or `null` on failure
+func get_node_or_crash_(parent, path) -> Node:
 	assert_(path != null && !path.is_empty(), "missing path")
 	assert_(parent != null, "missing parent node")
 	var node = parent.get_node(path)
@@ -283,7 +377,22 @@ func get_node_or_crash_(parent: Node, path: NodePath) -> Node:
 	return node
 var get_node_or_crash = funcref(self, "get_node_or_crash_")
 
-# create Timer node, connect timeout signal to the method and start
+## Get a child node. If there is any problem, return `null`.
+## @param parent {Node | null}    Of which node we want to retrieve a child
+## @param path {NodePath | null}  Path to a child
+## @return {Node | null}          Child node or `null` on failure
+func get_node_or_null_(parent, path):
+	if path == null || path.is_empty(): return null
+	if parent == null: return null
+	return parent.get_node(path)
+var get_node_or_null = funcref(self, "get_node_or_null_")
+
+## Create a `Timer` node, connect timeout signal to the method and start.
+## @param on {Node} Parent node for `Timer`, contains callback method
+## @param method_name {String} Name of a method which is called after timer finishes
+## @param time {float} Amount of time in seconds before callback method is called
+## @param one_shot {bool} Should the new `Timer` run in one-shot mode? If it does, `Timer` is destroyed after time elapses, otherwise `Timer` remains.
+## @return {Timer} New `Timer` node
 func create_timer_and_start_(on: Node, method_name: String, time: float, one_shot:= true) -> Timer:
 	var t = Timer.new()
 	t.wait_time = time
@@ -299,47 +408,185 @@ func _on_dynamic_timer_end(t: Timer) -> void: t.queue_free()
 
 var _words_splitter:= RegEx.new()
 
+## Split a string to an array of words.
+## @param x {String} Input string
+## @return {Array<String>} words
+## @example `words_raw_("a  b")` will return `["a", "b"]`.
 func words_raw_(x: String) -> Array: return words_(x).val
 var words_raw = funcref(self, "words_raw_")
 
-# split string to array of words (e.g. "a  b" -> ["a", "b"])
+## Split a string to an array of words.
+## @param x {String} Input string
+## @return {GGArray<String>} words
+## @example `words_("a  b")` will return `arr(["a", "b"])`.
 func words_(x: String) -> GGArray: return arr(_words_splitter.search_all(x)).map("x => x.strings[0]")
 var words = funcref(self, "words_")
 
-# join words array to string (e.g. ["a", "b"] -> "a b")
+## Join words array to one string
+## @param xs {Array<String>} Input array of words
+## @return {String} Joined words
+## @example `unwords_(["a", "b"])` returns `"a b"`
 func unwords_(xs: Array) -> String: return arr(xs).join(" ")
 var unwords = funcref(self, "unwords_")
 
 var _lines_splitter:= RegEx.new()
 
+## Split string with new line sequences to an array of lines
+## Same as [[lines_]], but returns `Array<String>` instead of `GGArray<String>`.
 func lines_raw_(x: String) -> Array: return lines_(x).val
 var lines_raw = funcref(self, "lines_raw_")
 
-# split string to lines (e.g. "a\n\nb" -> ["a", "b"])
+## Split string with new line sequences to an array of lines
+## @param x {String} Input text
+## @return {GGArray<String>} Array containing lines as items (without new line sequences)
+## @example `lines_("a\n\nb")` returns `arr(["a", "b"])`
 func lines_(x: String) -> GGArray: return arr(_lines_splitter.search_all(x)).map("x => x.strings[0]")
 var lines = funcref(self, "lines_")
 
-# join lines to string (e.g. ["a", "b"] -> "a\nb")
+## Join an array of lines to a string.
+## @example `unlines_(["a", "b"])` returns `"a\nb"`
 func unlines_(xs: Array) -> String: return arr(xs).join("\n")
 var unlines = funcref(self, "unlines_")
 
-# calls first function with given input then sequentially takes results from a previous function and passes to a next
-# supports lambdas (string, e.g. "x => x + 1") and partial application of 2 arg. functions (e.g. [GG.take, 2])
-# options dictionary fields:
-#   debug - if true then input, middle values and result is printed
+## Calls first function with given input then sequentially takes a result from a previous function and passes it to a next one.
+## Supports lambdas (string, e.g. `"x => x + 1"`) and partial application of 2 argument functions (e.g. `[GG.take, 2]`)
+## Options dictionary fields:
+## * print - if `true` then input, middle values and result is printed
+## @example `pipe_(0, [inc_, inc_])` returns `2`, it is equivalent to `inc_(inc_(0))`.
+## @example `pipe_([1, 2], [[GG.take, 1], "xs => xs[0] * 10"])` returns `10`, it is equivalent to `take_([1, 2], 1)[0] * 10`.
 func pipe_(input, functions: Array, options = null): return GGI.pipe_(input, functions, options)
 var pipe = funcref(self, "pipe_")
 
-# identity
+## Similar to [[pipe_]], but returns "piped" function composed from all passed functions.
+## If you intend to call the resulting function immediately, use rather [[pipe_]] for better performance.
+func flow_(functions: Array): return GGI.flow_(functions)
+var flow = funcref(self, "flow_")
+
+## Identity function - returns same value it got in an argument.
+## @typeparam T {any}
+## @param x {T} Input value
+## @return {T} Same value as on input
 func id_(x): return x
 var id = funcref(self, "id_")
 
-# call function-like f with x, return x (ignore return value of f)
+## Construct a function accepting one argument.
+## This new function ignores passed argument and always returns `x` (an argument it was created with).
+## @typeparam T {any}
+## @param x {T} Value to be returned from constructed function
+## @return {FuncLike<any, T>}
+## @example `const_(1).call_func("Gorn")` returns `1`
+## @example `const_("Resistance is futile!").call_func("Resist!")` returns `"Resistance is futile!"`
+func const_(x): return GGI.const_(x)
+var const__ = funcref(self, "const_")
+
+## Call function-like `f` with `x`, return `x` (ignore return value of `f`).
+## @typeparam T {any}
+## @param x {T} Input value
+## @param f {FuncLike<T, any>} Function accepting input value
+## @return {T} Input value `x`
 func tap_(x, f): return GGI.tap_(x, f)
 var tap = funcref(self, "tap_")
 
+## Format bool (default formatting uses upper-case, this function uses lower-case).
+## @param x {bool}  Input value
+## @return {String} Formatted value
+func fmt_bool_(x: bool) -> String: return "true" if x else "false"
+var fmt_bool = funcref(self, "fmt_bool_")
+
+## Create an array of length `n` where all items are `x`.
+## @typeparam T {any}
+## @param x {T} Item used for filling the array
+## @param n {int} Number of items
+## @return {Array<T>}
+## @example `replicate_("a", 3)` returns `["a", "a", "a"]`
+func replicate_(x, n: int) -> Array: return GGI.replicate_(x, n)
+var replicate = funcref(self, "replicate_")
+
+## Create an n-dimensional array and fill its every cell with given `zero` value
+## @typeparam T {any}
+## @param zero {T} Value to assign to all cells
+## @param dimensions {Array<int>} Dimensions (lengths) of new nested array.
+## @return {Array<any>} Nested (n-dimensional) array
+## @example `new_array_(0, [1])` returns `[0]`
+## @example `new_array_(0, [3])` returns `[0, 0, 0]`
+## @example `new_array_(0, [1, 2])` returns `[[0, 0]]`
+## @example `new_array_("x", [2, 3])` returns `[["x", "x", "x"], ["x", "x", "x"]]`
+func new_array_(zero, dimensions: Array) -> Array: return GGI.new_array_(zero, dimensions)
+var new_array = funcref(self, "new_array_")
+
+## Create an n-dimensional array and fill its every cell with a value returned by `cell_value_getter`.
+## @typeparam T {any}
+## @param cell_value_getter {FuncLike<Array<int>, T>} Function which accepts coordinates (array of numbers) and returns a value for a cell on those coordinates
+## @param dimensions {Array<int>} Dimensions (lengths) of new nested array.
+## @return {Array<any>} Nested (n-dimensional) array
+## @example `generate_array_(GG.id, [3])` returns `[[0], [1], [2]]`
+## @example `generate_array_("x => x[0] * 10 + x[1]", [2, 3])` returns `[ [0, 1, 2], [10, 11, 12] ]`
+func generate_array_(cell_value_getter, dimensions: Array) -> Array: return GGI.generate_array_(cell_value_getter, dimensions)
+var generate_array = funcref(self, "generate_array_")
+
+## Get field values from given object/dictionary as an array (indices of output array matches those of input array)
+## @param obj {Object | Dictionary} Input value
+## @param field_names {Array<String>} Names of fields to read values from
+## @return {Array<any>} Read values of given fields
+## @example `get_fields_({x = 2, y = true}, ["x", "y"])` returns `[2, true]`
+func get_fields_(obj, field_names: Array) -> Array: return GGI.get_fields_(obj, field_names)
+var get_fields = funcref(self, "get_fields_")
+
+## Set field values of object/dictionary according to arrays of values and field names (indices of arrays match).
+## @param obj {Object | Dictionary} Target for setting values on
+## @param values {Array<any>} List of values
+## @param field_names {Array<string>} List of corresponding field names
+## @return {void}
+## @example `var dict = {x = 2, y = true}; GG.set_fields_(dict, [69, false], ["x", "y"])` results in `dict` to be equal to `{x = 69, y = false}`
+func set_fields_(obj, values: Array, field_names: Array) -> void: GGI.set_fields_(obj, values, field_names)
+var set_fields = funcref(self, "set_fields_")
+
+## Return `on_false`/`on_true` depending on value of `cond`
+## @typeparam T {any} Return type
+## @param cond {bool} Condition
+## @param on_false {T} Value to return when `cond` is `false`
+## @param on_true {T} Value to return when `cond` is `true`
+## @return {T}
+## @example `bool_(true, 0, 1)` returns `1`
+## @example `bool_(x == 0, "not zero", "is zero")` returns `"is zero"` when `x` is `0`, otherwise returns `"not zero"`
+func bool_(cond: bool, on_false, on_true): return GGI.bool_(cond, on_false, on_true)
+var bool__ = funcref(self, "bool_")
+
+## Same as [[bool_]], but `on_false`/`on_true` are functions.
+## Only selected function will be called and its return value will be returned from `bool_lazy`.
+## @typeparam T {any} Return type
+## @param cond {bool} Condition
+## @param on_false {FuncLike<T>} Function to call and return its result when `cond` is `false`
+## @param on_true {FuncLike<T>} Function to call and return its result when `cond` is `true`
+## @return {T}
+func bool_lazy_(cond: bool, on_false, on_true): return GGI.bool_lazy_(cond, on_false, on_true)
+var bool_lazy = funcref(self, "bool_lazy_")
+
+## Pause specific node. Disables all processing by a given node.
+## @param node {Node}  Branch to pause.
+## @param value {bool} True means pause, false means resume (unpause)
+func pause_one_(node: Node, value: bool) -> void: GGI.pause_one_(node, value)
+var pause_one = funcref(self, "pause_one_")
+
+## Pause a branch starting with given node (recursive variant of [[pause_one_]]).
+## @param node {Node}  Branch to pause.
+## @param value {bool} True means pause, false means resume (unpause)
+func pause_(node: Node, value: bool) -> void: GGI.pause_(node, value)
+var pause = funcref(self, "pause_")
+
+# TODO:
+# print
+# drop_while, drop_while_right
+# partial ap. for more parameters?
+# ? zip_with_index/map_with_index/map_idx?
+# ? const
+# ? compose
+# ? flip
+# ? obj_to_dict
+# ? flatten_deep
+
 # ----------------------------------------------------------------------------------------------------------------------
-# see GGArray
+# See GGArray for docs for following functions.
 
 func size_(x): return GGI.size_(x)
 var size = funcref(self, "size_")
@@ -373,6 +620,13 @@ var zip = funcref(self, "zip_")
 
 func map_(arr: Array, f, ctx = GGI._EMPTY_CONTEXT) -> Array: return GGI.map_(arr, f, ctx)
 var map = funcref(self, "map_")
+
+func for_each_(arr: Array, f, ctx = GGI._EMPTY_CONTEXT) -> void: GGI.for_each_(arr, f, ctx)
+var for_each = funcref(self, "for_each_")
+
+func join_(array: Array, delim: String = "", before: String = "", after: String = "") -> String:
+	return GGI.join_(array, delim, before, after)
+var join = funcref(self, "join_")
 
 func filter_(arr: Array, f, ctx = GGI._EMPTY_CONTEXT) -> Array: return GGI.filter_(arr, f, ctx)
 var filter = funcref(self, "filter_")
@@ -435,9 +689,3 @@ var concat = funcref(self, "concat_")
 
 func concat_left_(xs: Array, other: Array) -> Array: return GGI.concat_left_(xs, other)
 var concat_left = funcref(self, "concat_left_")
-
-# TODO:
-# ? compose, flow
-# ? flip
-# ? obj_to_dict
-# ? flatten_deep
