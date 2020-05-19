@@ -93,9 +93,18 @@ All functions should be [documented](docs/index.md) (either in [main file](golde
 
 While I tried to optimize most functions, using this library will probably lead to worse performance compared to native solutions (e.g. using `for`s, mutable variables). It is a price for nice abstractions. But looking at the future - when JIT arrives, differences in performance might not be significant. Generally, I would not recommend building too many wrappers (`arr`, `G`) in `_process` and `_physics_process` especially if you are targeting mobile platforms. (You can use most functions directly from `GG` without an array wrapper.)
 
+ Compatibility
+---------------
+
+| Godot | Golden Gadget |
+| ----- | ------------- |
+| 3.1.1 | 0.2.0         |
+
+It is very likely that the library will be compatible across same main Godot version (e.g. if it's tested with 3.1.1, it most likely will work with 3.2.1 as well).
+
 ⚖️ License
 ---------
-MIT
+Source code is under MIT license.
 
 - - -
 
