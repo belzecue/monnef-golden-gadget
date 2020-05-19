@@ -5,8 +5,9 @@ class_name GGInternal
 const _EMPTY_CONTEXT = "This is a workaround GDScript's limitations:" +\
   " instances of user classes cannot be assigned to const (nor anything like 'Symbol' from JS exists)"
 
-func quit_() -> void:
+func quit_(error_code: int = 0) -> void:
 	var ml = Engine.get_main_loop()
+	OS.set_exit_code(error_code)
 	if !ml || !ml.has_method("quit"):
 		print("Failed to get main loop (or it doesn't support quit method). Cannot use ordinary means of termination.")
 		assert(false)
@@ -15,22 +16,32 @@ func quit_() -> void:
 
 func crash_(msg: String) -> void:
 	print("crash:", msg)
-	quit_()
+	quit_(1)
 
 func assert_(cond: bool, msg: String) -> void: if !cond: crash_(msg)
 
-func head_(arr: Array): return arr[0] if arr.size() > 0 else null
+func head_(arr: Array):
+	if is_empty_(arr): crash_("Cannot get a first element (head) of an empty array.")
+	return arr[0]
 
-func last_(arr: Array): return arr[arr.size() - 1] if arr.size() > 0 else null
+func head_or_null_(arr: Array):
+	return arr[0] if !is_empty_(arr) else null
+
+func last_(arr: Array):
+	if is_empty_(arr): crash_("Cannot get a last element of an empty array")
+	return arr[arr.size() - 1]
+
+func last_or_null_(arr: Array):
+	return arr[arr.size() - 1] if !is_empty_(arr) else null
 
 func tail_(arr: Array):
-	if arr.size() == 0: return null
+	if is_empty_(arr): return null
 	var r = arr.duplicate()
 	r.pop_front()
 	return r
 
 func init_(arr: Array):
-	if arr.size() == 0: return null
+	if is_empty_(arr): return null
 	var r = arr.duplicate()
 	r.pop_back()
 	return r
@@ -55,6 +66,21 @@ func filter_fn_(arr: Array, predicate, ctx = _EMPTY_CONTEXT) -> Array:
 	return r
 
 func filter_(arr: Array, predicate, ctx = _EMPTY_CONTEXT) -> Array: return filter_fn_(arr, f_like_to_func(predicate), ctx)
+
+func find_(arr: Array, predicate, ctx = _EMPTY_CONTEXT): return head_(filter_(arr, predicate, ctx))
+
+func find_or_null_(arr: Array, predicate, ctx = _EMPTY_CONTEXT): return head_or_null_(filter_(arr, predicate, ctx))
+
+func find_index_or_null_(arr: Array, predicate, ctx = _EMPTY_CONTEXT):
+	var p = f_like_to_func(predicate)
+	for i in range(arr.size()):
+		if call_f1_w_ctx(p, arr[i], ctx): return i
+	return null
+
+func find_index_(arr: Array, predicate, ctx = _EMPTY_CONTEXT):
+	var r = find_index_or_null_(arr, predicate, ctx)
+	assert_(r != null, "index not found")
+	return r
 
 func foldl_fn_(arr: Array, f: FuncRef, zero, ctx = _EMPTY_CONTEXT):
 	var r = zero
@@ -164,7 +190,7 @@ func function_(expr: String) -> FuncRef:
 	return funcref(scr, "f")
 
 func sample_or_null_(arr: Array):
-	if arr.size() == 0: return null
+	if is_empty_(arr): return null
 	return arr[randi() % arr.size()]
 
 func sample_(arr: Array):
@@ -186,6 +212,16 @@ func take_(xs: Array, n: int) -> Array:
 func take_right_(xs: Array, n: int) -> Array:
 	var res:= []
 	for i in range(max(0, xs.size() - n), xs.size()): res.push_back(xs[i])
+	return res
+
+func take_while_(xs: Array, p) -> Array:
+	if is_empty_(xs): return []
+	var res:= []
+	var pf = f_like_to_func(p)
+	var i:= 0
+	while i < xs.size() && pf.call_func(xs[i]):
+		res.push_back(xs[i])
+		i += 1
 	return res
 
 func drop_(xs: Array, n: int) -> Array:
@@ -303,6 +339,7 @@ func new_array_(x, dims: Array) -> Array:
 	if is_empty_(dims): return []
 	var cur_dim = last_(dims)
 	var res = replicate_(x, cur_dim)
+	if x && (x is Array || (x is Object && "duplicate" in x)): res = map_(res, "x => x.duplicate()")
 	var last_dim = dims.size() == 1
 	return res if last_dim else new_array_(res, init_(dims))
 
@@ -343,3 +380,42 @@ func pause_(node: Node, value: bool) -> void:
 		pause_(ch, value)
 
 func const_(x): return CtxFRef1.new(function_("a, b => b"), x)
+
+func group_with_(arr: Array, f) -> Array:
+	var mapper = f_like_to_func(f)
+	var r:= []
+	var c:= []
+	for x in arr:
+		if is_empty_(c): c = [x]
+		else:
+			if mapper.call_func(c[0]) == mapper.call_func(x): c.push_back(x)
+			else:
+				r.push_back(c)
+				c = [x]
+	if !is_empty_(c): r.push_back(c)
+	return r
+
+func transpose_(arr: Array) -> Array:
+	var rows = size_(arr)
+	if rows == 0: return []
+	var cols = size_(arr[0])
+	if cols == 0: return []
+	var res:= new_array_(null, [cols, rows])
+	for x in range(cols):
+		for y in range(rows):
+			res[x][y] = arr[y][x]
+	return res
+
+func nub_(xs: Array) -> Array:
+	var res:= []
+	for x in xs:
+		if is_empty_(res) || last_(res) != x: res.push_back(x)
+	return res
+
+func uniq_(xs: Array) -> Array:
+	var res:= []
+	for x in xs:
+		if !res.has(x): res.push_back(x)
+	return res
+
+func float_arr_to_int_arr_(xs: Array) -> Array: return map_(xs, "x => int(x)")

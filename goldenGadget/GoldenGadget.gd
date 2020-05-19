@@ -9,7 +9,7 @@
 # Golden Gadget
 # GDScript utility library focused on functional programming (FP)
 #
-# version: 0.2.0 (2019-2020)
+# version: 0.3.0 (2019-2020)
 # author:  monnef
 # license: MIT
 # repo:    https://gitlab.com/monnef/golden-gadget
@@ -30,7 +30,7 @@
 # Nice examples are located in GGTests script at the end.
 
 ## If some function is undocumented here (e.g. [[size_]]), please see documentation of [[GGArray]].
-## .
+##
 ## `FuncLike<A, B>` means function-like value which represents a function taking one argument of type `A` and returns value of type `B`.
 ## @fileDocumentation
 
@@ -42,6 +42,8 @@ var GGI = preload("GGInternal.gd").new()
 func _ready() -> void:
 	_words_splitter.compile("[^\\s]+")
 	_lines_splitter.compile("[^\n]+")
+	# _lower_upper_case_splitter.compile("\\p{Lu}*(?:\\p{Ll}|\\d)*") # Godot doesn't support unicode property codes :(
+	_lower_upper_case_splitter.compile("[A-Z]*[a-z0-9]*")
 
 ## Wraps `Array` into [[GGArray]].
 ## @param arr {Array<T>} array to wrap
@@ -61,7 +63,8 @@ func with_ctx2(f: FuncRef, ctx) -> CtxFRef2: return CtxFRef2.new(f, ctx)
 # utility functions
 
 ## Terminate/halt/quit program.
-func quit_() -> void: GGI.quit_()
+## @param error_code {int} Exit code returned from the Godot process (0 means normal exit, >0 means an error)
+func quit_(error_code: int = 0) -> void: GGI.quit_(error_code)
 var quit = funcref(self, "quit_")
 
 ## Assert condition is `true`, terminate program with error message otherwise.
@@ -126,6 +129,21 @@ var call_spread = funcref(self, "call_spread_")
 func snake_to_pascal_case_(x: String) -> String: return arr(x.split("_")).map_fn(capitalize).join("")
 var snake_to_pascal_case = funcref(self, "snake_to_pascal_case_")
 
+## Convert string from snake to camel case.
+func snake_to_camel_case_(x: String) -> String: return decapitalize_first_(arr(x.split("_")).map_fn(capitalize).join(""))
+var snake_to_camel_case = funcref(self, "snake_to_camel_case_")
+
+var _lower_upper_case_splitter = RegEx.new()
+
+## Convert string from camel to snake case.
+func camel_to_snake_case_(x: String) -> String:
+	return arr(_lower_upper_case_splitter.search_all(x))\
+	  .map("x => x.get_string()")\
+	  .filter("x => x != \"\"")\
+	  .map(capitalize_all)\
+	  .join("_")
+var camel_to_snake_case = funcref(self, "camel_to_snake_case_")
+
 ## Capitalize string - convert first character to upper case and all other to lower case.
 func capitalize_(x: String) -> String:
 	if x.length() == 0: return ""
@@ -138,6 +156,17 @@ func capitalize_first_(x: String) -> String:
 	var arr = x.to_utf8()
 	return x[0].to_upper() + PoolByteArray(tail_(arr)).get_string_from_utf8()
 var capitalize_first = funcref(self, "capitalize_first_")
+
+## Capitalize all characters.
+func capitalize_all_(x: String) -> String: return x.to_upper()
+var capitalize_all = funcref(self, "capitalize_all_")
+
+## Decapitalize first character of string (doesn't touch other characters).
+func decapitalize_first_(x: String) -> String:
+	if x.length() == 0: return ""
+	var arr = x.to_utf8()
+	return x[0].to_lower() + PoolByteArray(tail_(arr)).get_string_from_utf8()
+var decapitalize_first = funcref(self, "decapitalize_first_")
 
 ## Do nothing.
 ## @param x {any}
@@ -286,7 +315,7 @@ var ap_if_defined = funcref(self, "ap_if_defined_")
 ## Get a random item from an array.
 ## @param arr {Array<T>} the input array
 ## @return {T} a randomly picked item
-## @typeparam T {any}    type of items in the array
+## @typeParam T {any}    type of items in the array
 ## @example `sample_([1, 2])` returns `1` or `2` with equal chance
 ## @example `sample_([])` crashes
 ## Crashes on an empty array.
@@ -296,7 +325,7 @@ var sample = funcref(self, "sample_")
 ## Get a random item from an array.
 ## @param arr {Array<T>} the input array
 ## @return {T | null}    a random item, or null for an empty array
-## @typeparam T {any}    type of items in the array
+## @typeParam T {any}    type of items in the array
 ## @example `sample_or_null_([1, 2])` returns `1` or `2` with equal chance
 ## @example `sample_or_null_([])` returns always `null`
 func sample_or_null_(arr: Array): return GGI.sample_or_null_(arr)
@@ -310,6 +339,41 @@ func format_datetime_(date = null) -> String:
 	if !date: date = OS.get_datetime()
 	return "%s-%02d-%02d--%02d-%02d-%02d" % [date.year, date.month, date.day, date.hour, date.minute, date.second]
 var format_datetime = funcref(self, "format_datetime_")
+
+## Test if two `float` values are same (withing maring of `eps`).
+## @param x {float} first value
+## @param y {float} second value
+## @param eps {float} accepted margin
+## @return {bool}
+func floats_are_equal_(x: float, y: float, eps:= 0.0001) -> bool: return x + eps >= y && x - eps <= y
+var floats_are_equal = funcref(self, "floats_are_equal_")
+
+## Format `float` to 2 decimal places.
+## @param x {float | null}
+## @return {String}
+## @example `format_float_2_(1.23456)` returns `"1.23"`
+func format_float_2_(x) -> String:
+	if x is float: return "%.2f" % x
+	return str(x)
+var format_float_2 = funcref(self, "format_float_2_")
+
+## Format `Vector2` to 2 decimal places.
+## @param x {Vector2 | null}
+## @return {String}
+## @example `format_vec2_2_(Vector2(1.2345, 0))` returns `"1.23, 0.00"`
+func format_vec2_2_(x) -> String:
+	if x is Vector2: return "%.2f, %.2f" % [x.x, x.y]
+	return str(x)
+var format_vec2_2 = funcref(self, "format_vec2_2_")
+
+## Format `Vector3` to 2 decimal places.
+## @param x {Vector3 | null}
+## @return {String}
+## @example `format_vec3_2_(Vector3(1.2345, 0, 7))` returns `"1.23, 0.00, 7.00"`
+func format_vec3_2_(x) -> String:
+	if x is Vector3: return "%.2f, %.2f, %.2f" % [x.x, x.y, x.z]
+	return str(x)
+var format_vec3_2 = funcref(self, "format_vec3_2_")
 
 ## Save a screenshot.
 ## Optionally takes an options dictionary:
@@ -362,7 +426,7 @@ var delete_children = funcref(self, "delete_children_")
 ## @return {Array<Node>}
 func get_children_rec_(parent: Node) -> Array:
 	var children = parent.get_children()
-	return arr(children).map("x => [x]").append(arr(children).map(get_children_rec).flatten().val).flatten().val
+	return arr(children).map("x => [x]").append(arr(children).map(get_children_rec).flatten_raw().val).flatten_raw().val
 var get_children_rec = funcref(self, "get_children_rec_")
 
 ## Safer `get_node` alternative which will crash when a parent, a path or a node are `null`/empty.
@@ -463,7 +527,7 @@ func flow_(functions: Array): return GGI.flow_(functions)
 var flow = funcref(self, "flow_")
 
 ## Identity function - returns same value it got in an argument.
-## @typeparam T {any}
+## @typeParam T {any}
 ## @param x {T} Input value
 ## @return {T} Same value as on input
 func id_(x): return x
@@ -471,7 +535,7 @@ var id = funcref(self, "id_")
 
 ## Construct a function accepting one argument.
 ## This new function ignores passed argument and always returns `x` (an argument it was created with).
-## @typeparam T {any}
+## @typeParam T {any}
 ## @param x {T} Value to be returned from constructed function
 ## @return {FuncLike<any, T>}
 ## @example `const_(1).call_func("Gorn")` returns `1`
@@ -480,7 +544,7 @@ func const_(x): return GGI.const_(x)
 var const__ = funcref(self, "const_")
 
 ## Call function-like `f` with `x`, return `x` (ignore return value of `f`).
-## @typeparam T {any}
+## @typeParam T {any}
 ## @param x {T} Input value
 ## @param f {FuncLike<T, any>} Function accepting input value
 ## @return {T} Input value `x`
@@ -494,7 +558,7 @@ func fmt_bool_(x: bool) -> String: return "true" if x else "false"
 var fmt_bool = funcref(self, "fmt_bool_")
 
 ## Create an array of length `n` where all items are `x`.
-## @typeparam T {any}
+## @typeParam T {any}
 ## @param x {T} Item used for filling the array
 ## @param n {int} Number of items
 ## @return {Array<T>}
@@ -503,7 +567,7 @@ func replicate_(x, n: int) -> Array: return GGI.replicate_(x, n)
 var replicate = funcref(self, "replicate_")
 
 ## Create an n-dimensional array and fill its every cell with given `zero` value
-## @typeparam T {any}
+## @typeParam T {any}
 ## @param zero {T} Value to assign to all cells
 ## @param dimensions {Array<int>} Dimensions (lengths) of new nested array.
 ## @return {Array<any>} Nested (n-dimensional) array
@@ -515,7 +579,7 @@ func new_array_(zero, dimensions: Array) -> Array: return GGI.new_array_(zero, d
 var new_array = funcref(self, "new_array_")
 
 ## Create an n-dimensional array and fill its every cell with a value returned by `cell_value_getter`.
-## @typeparam T {any}
+## @typeParam T {any}
 ## @param cell_value_getter {FuncLike<Array<int>, T>} Function which accepts coordinates (array of numbers) and returns a value for a cell on those coordinates
 ## @param dimensions {Array<int>} Dimensions (lengths) of new nested array.
 ## @return {Array<any>} Nested (n-dimensional) array
@@ -523,6 +587,13 @@ var new_array = funcref(self, "new_array_")
 ## @example `generate_array_("x => x[0] * 10 + x[1]", [2, 3])` returns `[ [0, 1, 2], [10, 11, 12] ]`
 func generate_array_(cell_value_getter, dimensions: Array) -> Array: return GGI.generate_array_(cell_value_getter, dimensions)
 var generate_array = funcref(self, "generate_array_")
+
+## Convert array of floats to array of integers. Useful for correcting parsed JSONs.
+## @param arr {Array<float>}
+## @return {Array<int>}
+## @example `float_arr_to_int_arr_([1.0, 2.0])` returns `[1, 2]`
+func float_arr_to_int_arr_(arr: Array) -> Array: return GGI.float_arr_to_int_arr_(arr)
+var float_arr_to_int_arr = funcref(self, "float_arr_to_int_arr_")
 
 ## Get field values from given object/dictionary as an array (indices of output array matches those of input array)
 ## @param obj {Object | Dictionary} Input value
@@ -542,7 +613,7 @@ func set_fields_(obj, values: Array, field_names: Array) -> void: GGI.set_fields
 var set_fields = funcref(self, "set_fields_")
 
 ## Return `on_false`/`on_true` depending on value of `cond`
-## @typeparam T {any} Return type
+## @typeParam T {any} Return type
 ## @param cond {bool} Condition
 ## @param on_false {T} Value to return when `cond` is `false`
 ## @param on_true {T} Value to return when `cond` is `true`
@@ -554,7 +625,7 @@ var bool__ = funcref(self, "bool_")
 
 ## Same as [[bool_]], but `on_false`/`on_true` are functions.
 ## Only selected function will be called and its return value will be returned from `bool_lazy`.
-## @typeparam T {any} Return type
+## @typeParam T {any} Return type
 ## @param cond {bool} Condition
 ## @param on_false {FuncLike<T>} Function to call and return its result when `cond` is `false`
 ## @param on_true {FuncLike<T>} Function to call and return its result when `cond` is `true`
@@ -574,12 +645,56 @@ var pause_one = funcref(self, "pause_one_")
 func pause_(node: Node, value: bool) -> void: GGI.pause_(node, value)
 var pause = funcref(self, "pause_")
 
+## Get random direction 2D vector.
+func rand_dir2_() -> Vector2: return Vector2(randf() - .5, randf() - .5).normalized()
+var rand_dir2 = funcref(self, "rand_dir2_")
+
+## Get random direction 3D vector.
+func rand_dir3_() -> Vector3: return Vector3(randf() - .5, randf() - .5, randf() - .5).normalized()
+var rand_dir3 = funcref(self, "rand_dir3_")
+
+## Get randomly `1` or `-1`.
+func rand_sign_(): return -1 if randf() < .5 else 1
+var rand_sign = funcref(self, "rand_sign_")
+
+## Get random `bool`.
+func rand_bool_(): return randf() > .5
+var rand_bool = funcref(self, "rand_bool_")
+
+## Get direction between two `Node2D`s.
+func dir_to2_(from: Node2D, to: Node2D) -> Vector2: return (to.global_position - from.global_position).normalized()
+var dir_to2 = funcref(self, "dir_to2_")
+
+## Get direction between two `Spatial`s.
+func dir_to3_(from: Spatial, to: Spatial) -> Vector3: return (to.global_transform.origin - from.global_transform.origin).normalized()
+var dir_to3 = funcref(self, "dir_to3_")
+
+## Limit given integer number to specified range.
+func clampi_(value: int, min_val: int, max_val: int) -> int:
+	if value < min_val: return min_val
+	if value > max_val: return max_val
+	return value
+var clampi = funcref(self, "clampi_")
+
+## Get absolute value of an integer (distance from zero).
+func absi_(value: int) -> int: return value if value >= 0 else -value
+var absi = funcref(self, "absi_")
+
+## Is given array empty?
+func is_empty_(arr: Array) -> bool: return GGI.is_empty_(arr)
+var is_empty = funcref(self, "is_empty_")
+
 # TODO:
+# rand_float, rand_int (interval)
+# has/elem (in hs: Eq a => a -> [a] -> Bool)
+# notElem?
+# randc / randca - random color (alpha = 1, alpha = random)?
 # print
+# format (`%` operator)
 # drop_while, drop_while_right
 # partial ap. for more parameters?
-# ? zip_with_index/map_with_index/map_idx?
-# ? const
+# span/break
+# ? zip_with_index/map_with_index/map_idx/mapi?
 # ? compose
 # ? flip
 # ? obj_to_dict
@@ -594,8 +709,14 @@ var size = funcref(self, "size_")
 func head_(arr: Array): return GGI.head_(arr)
 var head = funcref(self, "head_")
 
-func last_(arr: Array): return arr[arr.size() - 1] if arr.size() > 0 else null
+func head_or_null_(arr: Array): return GGI.head_or_null_(arr)
+var head_or_null = funcref(self, "head_or_null_")
+
+func last_(arr: Array): return GGI.last_(arr)
 var last = funcref(self, "last_")
+
+func last_or_null_(arr: Array): return GGI.last_or_null_(arr)
+var last_or_null = funcref(self, "last_or_null_")
 
 func tail_(arr: Array): return GGI.tail_(arr)
 var tail = funcref(self, "tail_")
@@ -631,6 +752,18 @@ var join = funcref(self, "join_")
 func filter_(arr: Array, f, ctx = GGI._EMPTY_CONTEXT) -> Array: return GGI.filter_(arr, f, ctx)
 var filter = funcref(self, "filter_")
 
+func find_(arr: Array, predicate, ctx = GGI._EMPTY_CONTEXT): return GGI.find_(arr, predicate, ctx)
+var find = funcref(self, "find_")
+
+func find_or_null_(arr: Array, predicate, ctx = GGI._EMPTY_CONTEXT): return GGI.find_or_null_(arr, predicate, ctx)
+var find_or_null = funcref(self, "find_or_null_")
+
+func find_index_or_null_(arr: Array, predicate, ctx = GGI._EMPTY_CONTEXT): return GGI.find_index_or_null_(arr, predicate, ctx)
+var find_index_or_null = funcref(self, "find_index_or_null_")
+
+func find_index_(arr: Array, predicate, ctx = GGI._EMPTY_CONTEXT): return GGI.find_index_(arr, predicate, ctx)
+var find_index = funcref(self, "find_index_")
+
 func foldl_(arr: Array, f, zero, ctx = GGI._EMPTY_CONTEXT): return GGI.foldl_(arr, f, zero, ctx)
 var foldl = funcref(self, "foldl_")
 
@@ -645,6 +778,9 @@ var take = funcref(self, "take_")
 # take last n items from array
 func take_right_(xs: Array, n: int) -> Array: return GGI.take_right_(xs, n)
 var take_right = funcref(self, "take_right_")
+
+func take_while_(xs: Array, p) -> Array: return GGI.take_while_(xs, p)
+var take_while = funcref(self, "take_while_")
 
 # drop first n items from array
 func drop_(xs: Array, n: int) -> Array: return GGI.drop_(xs, n)
@@ -689,3 +825,15 @@ var concat = funcref(self, "concat_")
 
 func concat_left_(xs: Array, other: Array) -> Array: return GGI.concat_left_(xs, other)
 var concat_left = funcref(self, "concat_left_")
+
+func group_with_(xs: Array, f) -> Array: return GGI.group_with_(xs, f)
+var group_with = funcref(self, "group_with_")
+
+func transpose_(xs: Array) -> Array: return GGI.transpose_(xs)
+var transpose = funcref(self, "transpose_")
+
+func nub_(xs: Array) -> Array: return GGI.nub_(xs)
+var nub = funcref(self, "nub_")
+
+func uniq_(xs: Array) -> Array: return GGI.uniq_(xs)
+var uniq = funcref(self, "uniq_")

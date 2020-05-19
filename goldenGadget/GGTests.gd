@@ -25,6 +25,7 @@ func run() -> void:
 	_test_math()
 	_test_bool()
 	_test_sort()
+	_test_rand()
 	_test_object()
 	_test_pairs()
 	_test_function_utils()
@@ -40,13 +41,16 @@ func run() -> void:
 	_test_insertion_concatenation()
 	_test_array_generators()
 	_test_batch_field_access()
+	_test_grouping()
+	_test_uniq()
+	_test_transpose()
+	_test_format()
 	var stop = OS.get_ticks_msec()
 	print("[GG] Golden Gadget Tests: SUCCESS in %.3fs (%s - %s)" % [(stop - start)/1000.0, start, stop])
 
 func _assert(actual, expected) -> void:
 	if !GG.eqd_(actual, expected):
-		print("Expected: %s, Actual: %s" % [expected, actual])
-		assert(false)
+		GG.assert_(false, "Expected: %s, Actual: %s" % [expected, actual])
 
 # args - arguments for function, last item is expected result
 func _test_func(args, op) -> void:
@@ -84,41 +88,41 @@ func _test_arr_wrapped_func_a(cases: Array, func_name) -> void:
 # ----------------------------------------------------------------------------------------------------------------------
 
 func _test_wrap() -> void:
-	assert(G([]).val == [])
-	assert(G([1, 2]).val == [1, 2])
-	assert(G([1, 2]).size == 2)
+	_assert(G([]).val, [])
+	_assert(G([1, 2]).val, [1, 2])
+	_assert(G([1, 2]).size, 2)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 func _test_map() -> void:
 	# map
-	assert(G([{x = 1}]).map(funcref(self, "_get_x")).val == [1])
-	assert(G([{x = 1}]).map("x => x.x").val == [1])
-	assert(GG.map_([{x = 1}], funcref(self, "_get_x")) == [1])
-	assert(GG.map_([{x = 1}], "x => x.x") == [1])
-	assert(G([1, 2]).map("x => x + 1").val == [2, 3])
+	_assert(G([{x = 1}]).map(funcref(self, "_get_x")).val, [1])
+	_assert(G([{x = 1}]).map("x => x.x").val, [1])
+	_assert(GG.map_([{x = 1}], funcref(self, "_get_x")), [1])
+	_assert(GG.map_([{x = 1}], "x => x.x"), [1])
+	_assert(G([1, 2]).map("x => x + 1").val, [2, 3])
 
 	# map with ctx
-	assert(G([{x = 1}, {a = 4, x = 2}]).map(funcref(self, "_get_x_and_add"), 10).val == [11, 12])
-	assert(G([{x = 1}, {a = 4, x = 2}]).map("x, ctx => x.x + ctx", 10).val == [11, 12])
-	assert(GG.map_([{x = 1}, {a = 4, x = 2}], funcref(self, "_get_x_and_add"), 10) == [11, 12])
-	assert(GG.map_([{x = 1}, {a = 4, x = 2}], "x, ctx => x.x + ctx", 10) == [11, 12])
+	_assert(G([{x = 1}, {a = 4, x = 2}]).map(funcref(self, "_get_x_and_add"), 10).val, [11, 12])
+	_assert(G([{x = 1}, {a = 4, x = 2}]).map("x, ctx => x.x + ctx", 10).val, [11, 12])
+	_assert(GG.map_([{x = 1}, {a = 4, x = 2}], funcref(self, "_get_x_and_add"), 10), [11, 12])
+	_assert(GG.map_([{x = 1}, {a = 4, x = 2}], "x, ctx => x.x + ctx", 10), [11, 12])
 
 	# map_out_mtd
-	assert(G([]).map_out_mtd(self, "_get_x").val == [])
-	assert(G([{x = 2}]).map_out_mtd(self, "_get_x").val == [2])
-	assert(G([{x = 2}, {a = 4, x = 2}]).map_out_mtd(self, "_get_x").val == [2, 2])
+	_assert(G([]).map_out_mtd(self, "_get_x").val, [])
+	_assert(G([{x = 2}]).map_out_mtd(self, "_get_x").val, [2])
+	_assert(G([{x = 2}, {a = 4, x = 2}]).map_out_mtd(self, "_get_x").val, [2, 2])
 
 	# map_out_mtd with ctx
-	assert(G([{x = 2}]).map_out_mtd(self, "_get_x_and_add", 10).val == [12])
+	_assert(G([{x = 2}]).map_out_mtd(self, "_get_x_and_add", 10).val, [12])
 
 	# map_in_mtd
-	assert(G([]).map_in_mtd("get_x").val == [])
-	assert(G([T0.new(3)]).map_in_mtd("get_x").val == [3])
-	assert(G([T0.new(3), T0.new(4), T0.new(5)]).map_in_mtd("get_x").val == [3, 4, 5])
+	_assert(G([]).map_in_mtd("get_x").val, [])
+	_assert(G([T0.new(3)]).map_in_mtd("get_x").val, [3])
+	_assert(G([T0.new(3), T0.new(4), T0.new(5)]).map_in_mtd("get_x").val, [3, 4, 5])
 
 	# map_in_mtd with ctx
-	assert(G([T0.new(3)]).map_in_mtd("get_x_and_add", 10).val == [13])
+	_assert(G([T0.new(3)]).map_in_mtd("get_x_and_add", 10).val, [13])
 
 	# map_fld
 	_assert(G([{name = "Spock"}, {name = "Scotty"}]).map_fld("name").val, ["Spock", "Scotty"])
@@ -175,28 +179,28 @@ class T0:
 
 func _test_join() -> void:
 	# join
-	assert(G([]).join(" ") == "")
-	assert(G([]).join() == "")
-	assert(G(["GG"]).join(" ") == "GG")
-	assert(G([""]).join("", "G", "G") == "GG")
-	assert(G(["Golden", "Gadget"]).join(" ") == "Golden Gadget")
-	assert(G(["a", "b"]).join(" ", "<", ">") == "<a b>")
-	assert(G([1, 2, 3]).join(", ", "<", ">") == "<1, 2, 3>")
+	_assert(G([]).join(" "), "")
+	_assert(G([]).join(), "")
+	_assert(G(["GG"]).join(" "), "GG")
+	_assert(G([""]).join("", "G", "G"), "GG")
+	_assert(G(["Golden", "Gadget"]).join(" "), "Golden Gadget")
+	_assert(G(["a", "b"]).join(" ", "<", ">"), "<a b>")
+	_assert(G([1, 2, 3]).join(", ", "<", ">"), "<1, 2, 3>")
 	_assert(GG.join_([1, 2, 3], ", ", "<", ">"), "<1, 2, 3>")
 	_assert(GG.join.call_func([1, 2, 3], ", ", "<", ">"), "<1, 2, 3>")
 	_assert(G(["Dog", "Cat", "Frog"]).join(", "), "Dog, Cat, Frog")
 
 	# join_w
-	assert(G([1, 2, 3]).join_w(", ", "<", ">").val == ["<1, 2, 3>"])
+	_assert(G([1, 2, 3]).join_w(", ", "<", ">").val, ["<1, 2, 3>"])
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 func _test_filter() -> void:
 	# filter_fn
-	assert(G([]).filter_fn(funcref(self, "_is_2")).val == [])
-	assert(G([1]).filter_fn(funcref(self, "_is_2")).val == [])
-	assert(G([2]).filter_fn(funcref(self, "_is_2")).val == [2])
-	assert(G(range(-4, 4)).filter_fn(funcref(self, "_gte_2")).val == [2, 3])
+	_assert(G([]).filter_fn(funcref(self, "_is_2")).val, [])
+	_assert(G([1]).filter_fn(funcref(self, "_is_2")).val, [])
+	_assert(G([2]).filter_fn(funcref(self, "_is_2")).val, [2])
+	_assert(G(range(-4, 4)).filter_fn(funcref(self, "_gte_2")).val, [2, 3])
 
 	# filter_fn with ctx
 	_assert(G([1, 2, 3]).filter_fn(funcref(self, "_sub_gte_2"), 1).val, [3])
@@ -214,27 +218,27 @@ func _test_filter() -> void:
 	_assert(GG.filter_(range(-4, 4), "x, y => x >= y", 2), [2, 3])
 
 	# filter_in_mtd
-	assert(G([]).filter_in_mtd("x_is_gte_2").val == [])
-	assert(G([T0.new(1)]).filter_in_mtd("x_is_gte_2").size == 0)
-	assert(G([T0.new(2)]).filter_in_mtd("x_is_gte_2").size == 1)
-	assert(G([T0.new(1), T0.new(2), T0.new(3)]).filter_in_mtd("x_is_gte_2").size == 2)
+	_assert(G([]).filter_in_mtd("x_is_gte_2").val, [])
+	_assert(G([T0.new(1)]).filter_in_mtd("x_is_gte_2").size, 0)
+	_assert(G([T0.new(2)]).filter_in_mtd("x_is_gte_2").size, 1)
+	_assert(G([T0.new(1), T0.new(2), T0.new(3)]).filter_in_mtd("x_is_gte_2").size, 2)
 
 	# filter_in_mtd with ctx
 	_assert(G([T0.new(1), T0.new(2), T0.new(3)]).filter_in_mtd("x_sub_is_gte_2", 1).size, 1)
 
 	# filter_out_mtd
-	assert(G([]).filter_out_mtd(self, "_gte_2").val == [])
-	assert(G([1]).filter_out_mtd(self, "_gte_2").val == [])
-	assert(G([2]).filter_out_mtd(self, "_gte_2").val == [2])
-	assert(G([1, 2, 3]).filter_out_mtd(self, "_gte_2").val == [2, 3])
+	_assert(G([]).filter_out_mtd(self, "_gte_2").val, [])
+	_assert(G([1]).filter_out_mtd(self, "_gte_2").val, [])
+	_assert(G([2]).filter_out_mtd(self, "_gte_2").val, [2])
+	_assert(G([1, 2, 3]).filter_out_mtd(self, "_gte_2").val, [2, 3])
 
 	# filter_out_mtd with ctx
 	_assert(G([1, 2, 3]).filter_out_mtd(self, "_sub_gte_2", 1).val, [3])
 
 	# filter_by_field
-	assert(G([]).filter_by_fld("b").size == 0)
-	assert(G([T0.new(0)]).filter_by_fld("b").size == 0)
-	assert(G([T0.new(0, true)]).filter_by_fld("b").size == 1)
+	_assert(G([]).filter_by_fld("b").size, 0)
+	_assert(G([T0.new(0)]).filter_by_fld("b").size, 0)
+	_assert(G([T0.new(0, true)]).filter_by_fld("b").size, 1)
 	assert(
 	  G([T0.new(0, true), T0.new(1, false), T0.new(2, true)])\
 		.filter_by_fld("b")\
@@ -244,15 +248,41 @@ func _test_filter() -> void:
 	_assert(G([{enabled = true, id = 0}, {enabled = false, id = 1}, {enabled = true, id = 2}]).filter_by_fld("enabled").map_fld("id").val, [0, 2])
 
 	# filter_by_fld_val
-	assert(G([]).filter_by_fld_val("_x", 0).size == 0)
-	assert(G([{}]).filter_by_fld_val("_x", 0).size == 0)
-	assert(G([T0.new(0, false)]).filter_by_fld_val("_x", 0).size == 1)
-	assert(G([T0.new(0, false), T0.new(1, false)]).filter_by_fld_val("b", false).size == 2)
+	_assert(G([]).filter_by_fld_val("_x", 0).size, 0)
+	_assert(G([{}]).filter_by_fld_val("_x", 0).size, 0)
+	_assert(G([T0.new(0, false)]).filter_by_fld_val("_x", 0).size, 1)
+	_assert(G([T0.new(0, false), T0.new(1, false)]).filter_by_fld_val("b", false).size, 2)
 	_assert(G([{id = 0, name = "Zero"}, {id = 1, name = "One"}]).filter_by_fld_val("id", 1).map_fld("name").val, ["One"])
 
 	# find_by_fld_val
-	assert(G([T0.new(-1, true), T0.new(0, false), T0.new(1, false)]).find_by_fld_val("b", false).get_x() == 0)
+	_assert(G([T0.new(-1, true), T0.new(0, false), T0.new(1, false)]).find_by_fld_val("b", false).get_x(), 0)
 	_assert(G([{id = 0, name = "Zero"}, {id = 1, name = "One"}]).find_by_fld_val("id", 1).name, "One")
+
+	# find_or_null
+	var find_or_null_cases = [
+		[[], "x => x == 1", null],
+		[[1], "x => x == 1", 1],
+		[[1, 2], "x => x == 1", 1],
+		[[1, 2], "x, ctx => x == ctx", 2, 2],
+		[[1, 2, 3], "x => x > 1", 2],
+	]
+	_test_func_a(find_or_null_cases, GG.find_or_null)
+	_test_func_a(find_or_null_cases, funcref(GG, "find_or_null_"))
+	_test_arr_func_a(find_or_null_cases, "find_or_null")
+	_assert(GG.find_or_null_([{id = 4, name = "Alice"}, {id = 7, name = "Bob"}], "x => x.name.length() == 3").id, 7)
+	_assert(G([{id = 4, name = "Alice"}, {id = 7, name = "Bob"}]).find_or_null("x => x.name.length() == 3").id, 7)
+
+	# find_index_or_null
+	var find_index_or_null_cases = [
+		[[], "x => x == 1", null],
+		[[1], "x => x == 1", 0],
+		[[1, 2], "x => x == 2", 1],
+		[[1, 2], "x, ctx => x == ctx", 2, 1],
+		[[1, 2, 3], "x => x > 2", 2],
+	]
+	_test_func_a(find_index_or_null_cases, GG.find_index_or_null)
+	_test_func_a(find_index_or_null_cases, funcref(GG, "find_index_or_null_"))
+	_test_arr_func_a(find_index_or_null_cases, "find_index_or_null")
 
 func _is_2(x) -> bool: return x == 2
 func _gte_2(x) -> bool: return x >= 2
@@ -262,9 +292,9 @@ func _sub_gte_2(x, a) -> bool: return x - a >= 2
 
 func _test_fold() -> void:
 	# foldl_fn
-	assert(G([]).foldl_fn(funcref(self, "add"), 0) == 0)
-	assert(G([1]).foldl_fn(funcref(self, "add"), 4) == 5)
-	assert(G([1, 2, 3]).foldl_fn(funcref(self, "add"), -6) == 0)
+	_assert(G([]).foldl_fn(funcref(self, "add"), 0), 0)
+	_assert(G([1]).foldl_fn(funcref(self, "add"), 4), 5)
+	_assert(G([1, 2, 3]).foldl_fn(funcref(self, "add"), -6), 0)
 
 	# foldl_fn with ctx
 	# (10 - 1) * -1 -> -9
@@ -283,9 +313,9 @@ func _test_fold() -> void:
 	_assert(GG.foldl_([1, 2, 3], "x, y, z => (x - y) * z", 10, -1), -8)
 
 	# foldl_mtd
-	assert(G([]).foldl_mtd(self, "add", 0) == 0)
-	assert(G([1]).foldl_mtd(self, "add", 4) == 5)
-	assert(G([1, 2, 3]).foldl_mtd(self, "add", -6) == 0)
+	_assert(G([]).foldl_mtd(self, "add", 0), 0)
+	_assert(G([1]).foldl_mtd(self, "add", 4), 5)
+	_assert(G([1, 2, 3]).foldl_mtd(self, "add", -6), 0)
 
 	# foldl_mtd with ctx
 	_assert(G([1, 2, 3]).foldl_mtd(self, "sub_mul", 10, -1), -8)
@@ -301,10 +331,10 @@ func _append_0(arr: Array) -> Array:
 	return r
 
 func _test_arr_pipe() -> void:
-	assert(G([1, 2]).to(funcref(self, "_append_0")) == [1, 2, 0])
-	assert(G([1, 2]).to_w(funcref(self, "_append_0")).val == [1, 2, 0])
-	assert(G([1, 2]).to("x => x.size() * 10") == 20)
-	assert(G([1, 2]).to(["x, y => x.size() * y", 10]) == 20)
+	_assert(G([1, 2]).to(funcref(self, "_append_0")), [1, 2, 0])
+	_assert(G([1, 2]).to_w(funcref(self, "_append_0")).val, [1, 2, 0])
+	_assert(G([1, 2]).to("x => x.size() * 10"), 20)
+	_assert(G([1, 2]).to(["x, y => x.size() * y", 10]), 20)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -360,6 +390,14 @@ func _test_utils() -> void:
 	_test_func_a(eqd_cases, GG.eqd)
 	_test_func_a(eqd_cases, funcref(GG, "eqd_"))
 
+	# floats_are_equal
+	var floats_are_equal_cases = \
+	[ [1.00001, 1, true]
+	, [-1.1, -1, false]
+	]
+	_test_func_a(floats_are_equal_cases, GG.floats_are_equal)
+	_test_func_a(floats_are_equal_cases, funcref(GG, "floats_are_equal_"))
+
 	# size
 	var size_cases = [
 		[[], 0],
@@ -389,6 +427,8 @@ func _test_array() -> void:
 	_test_arr_func_a(is_empty_cases, "_get_is_empty")
 	_assert(G([]).is_empty, true)
 	_assert(G([1]).is_empty, false)
+	_assert(GG.is_empty_([]), true)
+	_assert(GG.is_empty_([1]), false)
 
 	# size
 	var size_cases = \
@@ -402,30 +442,30 @@ func _test_array() -> void:
 	_assert(G([]).size, 0)
 	_assert(G([null, []]).size, 2)
 
-	# head
-	var head_cases = [
+	# head_or_null
+	var head_or_null_cases = [
 		[[], null],
 		[[1], 1],
 		[[1, 2], 1],
 	]
-	_test_func_a(head_cases, GG.head)
-	_test_func_a(head_cases, funcref(GG, "head_"))
-	_test_arr_func_a(head_cases, "head")
+	_test_func_a(head_or_null_cases, GG.head_or_null)
+	_test_func_a(head_or_null_cases, funcref(GG, "head_or_null_"))
+	_test_arr_func_a(head_or_null_cases, "head_or_null")
 
-	# last
-	var last_cases = [
+	# last_or_null
+	var last_or_null_cases = [
 		[[], null],
 		[[1], 1],
 		[[1, 2], 2],
 	]
-	_test_func_a(last_cases, GG.last)
-	_test_func_a(last_cases, funcref(GG, "last_"))
-	_test_arr_func_a(last_cases, "last")
+	_test_func_a(last_or_null_cases, GG.last_or_null)
+	_test_func_a(last_or_null_cases, funcref(GG, "last_or_null_"))
+	_test_arr_func_a(last_or_null_cases, "last_or_null")
 
 	# init
 	var init_input = [1, 2, 3]
-	assert(GG.init_(init_input) == [1, 2])
-	assert(init_input.size() == 3)
+	_assert(GG.init_(init_input), [1, 2])
+	_assert(init_input.size(), 3)
 	var init_cases = [
 		[[], null],
 		[[1], []],
@@ -439,8 +479,8 @@ func _test_array() -> void:
 
 	# tail
 	var tail_input = [1, 2, 3]
-	assert(GG.tail_(tail_input) == [2, 3])
-	assert(tail_input.size() == 3)
+	_assert(GG.tail_(tail_input), [2, 3])
+	_assert(tail_input.size(), 3)
 	var tail_cases = [
 		[[], null],
 		[[1], []],
@@ -517,6 +557,18 @@ func _test_array() -> void:
 	_test_func_a(take_right_cases, funcref(GG, "take_right_"))
 	_test_arr_wrapped_func_a(take_right_cases, "take_right")
 
+	# take_while
+	var take_while_cases = \
+	  [ [[], "x => true", []]
+	  , [[], "x => false", []]
+	  , [[1], "x => x > 10", []]
+	  , [[1], "x => x < 10", [1]]
+	  , [[0, 1, 2, 3, 4], "x => x < 2", [0, 1]]
+	  ]
+	_test_func_a(take_while_cases, GG.take_while)
+	_test_func_a(take_while_cases, funcref(GG, "take_while_"))
+	_test_arr_wrapped_func_a(take_while_cases, "take_while")
+
 	# drop
 	var drop_cases = \
 	  [ [[], 0, []]
@@ -581,20 +633,30 @@ func _test_array() -> void:
 	_test_func_a(compact_cases, funcref(GG, "compact_"))
 	_test_arr_wrapped_func_a(compact_cases, "compact")
 
+	# float_arr_to_int_arr
+	var float_arr_to_int_arr_cases = \
+	[ [[], []]
+	, [[1.1], [1]]
+	, [[1.0, 2.0], [1, 2]]
+	]
+	_test_func_a(float_arr_to_int_arr_cases, GG.float_arr_to_int_arr)
+	_test_func_a(float_arr_to_int_arr_cases, funcref(GG, "float_arr_to_int_arr_"))
+	_test_arr_wrapped_func_a(float_arr_to_int_arr_cases, "float_arr_to_int_arr")
+
 func _test_call_spreaded():
 	# call_spreaded
-	assert(GG.call_spread.call_func(funcref(self, "_sum0"), []) == 0)
-	assert(GG.call_spread_(funcref(self, "_sum0"), []) == 0)
-	assert(GG.call_spread_(funcref(self, "_sum1"), [1]) == 1)
-	assert(GG.call_spread_(funcref(self, "_sum2"), [1, 2]) == 3)
-	assert(GG.call_spread_(funcref(self, "_sum3"), [1, 2, 3]) == 6)
-	assert(GG.call_spread_(funcref(self, "_sum4"), [1, 2, 3, 4]) == 10)
-	assert(GG.call_spread_(funcref(self, "_sum5"), [1, 2, 3, 4, 5]) == 15)
-	assert(GG.call_spread_(funcref(self, "_sum6"), [1, 2, 3, 4, 5, 6]) == 21)
-	assert(GG.call_spread_(funcref(self, "_sum7"), [1, 2, 3, 4, 5, 6, 7]) == 28)
-	assert(GG.call_spread_(funcref(self, "_sum8"), [1, 2, 3, 4, 5, 6, 7, 8]) == 36)
-	assert(GG.call_spread_(funcref(self, "_sum9"), [1, 2, 3, 4, 5, 6, 7, 8, 9]) == 45)
-	assert(GG.call_spread_(funcref(self, "_sum10"), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) == 55)
+	_assert(GG.call_spread.call_func(funcref(self, "_sum0"), []), 0)
+	_assert(GG.call_spread_(funcref(self, "_sum0"), []), 0)
+	_assert(GG.call_spread_(funcref(self, "_sum1"), [1]), 1)
+	_assert(GG.call_spread_(funcref(self, "_sum2"), [1, 2]), 3)
+	_assert(GG.call_spread_(funcref(self, "_sum3"), [1, 2, 3]), 6)
+	_assert(GG.call_spread_(funcref(self, "_sum4"), [1, 2, 3, 4]), 10)
+	_assert(GG.call_spread_(funcref(self, "_sum5"), [1, 2, 3, 4, 5]), 15)
+	_assert(GG.call_spread_(funcref(self, "_sum6"), [1, 2, 3, 4, 5, 6]), 21)
+	_assert(GG.call_spread_(funcref(self, "_sum7"), [1, 2, 3, 4, 5, 6, 7]), 28)
+	_assert(GG.call_spread_(funcref(self, "_sum8"), [1, 2, 3, 4, 5, 6, 7, 8]), 36)
+	_assert(GG.call_spread_(funcref(self, "_sum9"), [1, 2, 3, 4, 5, 6, 7, 8, 9]), 45)
+	_assert(GG.call_spread_(funcref(self, "_sum10"), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 55)
 
 func _sum0(): return 0
 func _sum1(a): return a
@@ -620,6 +682,24 @@ func _test_strings() -> void:
 	_assert(GG.snake_to_pascal_case_("from_snake_case"), "FromSnakeCase")
 	_assert(GG.snake_to_pascal_case_("test_a_num_1"), "TestANum1")
 	_assert(GG.snake_to_pascal_case_("DETONATE_ON_TOUCH"), "DetonateOnTouch")
+
+	_assert(GG.decapitalize_first_(""), "")
+	_assert(GG.decapitalize_first_("ABC"), "aBC")
+	_assert(GG.decapitalize_first_("a"), "a")
+
+	_assert(GG.snake_to_camel_case_(""), "")
+	_assert(GG.snake_to_camel_case_("from_snake_case"), "fromSnakeCase")
+	_assert(GG.snake_to_camel_case_("DETONATE_ON_TOUCH"), "detonateOnTouch")
+
+	_assert(GG.capitalize_all_(""), "")
+	_assert(GG.capitalize_all_("abc"), "ABC")
+	_assert(GG.capitalize_all_("XoYo"), "XOYO")
+	_assert(GG.capitalize_all_("žluťoučký kůň"), "ŽLUŤOUČKÝ KŮŇ")
+
+	_assert(GG.camel_to_snake_case_(""), "")
+	_assert(GG.camel_to_snake_case_("pep"), "PEP")
+	_assert(GG.camel_to_snake_case_("detonateOnTouch"), "DETONATE_ON_TOUCH")
+	_assert(GG.camel_to_snake_case_("camelToSnakeCase"), "CAMEL_TO_SNAKE_CASE")
 
 	# words
 	var words_raw_cases = \
@@ -702,6 +782,15 @@ func _test_math() -> void:
 	_assert(GG.negate_num.call_func(1), -1)
 	_assert(GG.negate_num_(1), -1)
 	_assert(GG.negate_num_(-1.0), 1.0)
+
+	# clampi
+	var clampi_cases =\
+	[ [5, 0, 10, 5]
+	, [-1, 0, 10, 0]
+	, [12, 0, 10, 10]
+	]
+	_test_func_a(clampi_cases, GG.clampi)
+	_test_func_a(clampi_cases, funcref(GG, "clampi_"))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -788,6 +877,33 @@ func _test_sort() -> void:
 	_test_func_a(sort_with_cases, GG.sort_with)
 	_test_func_a(sort_with_cases, funcref(GG, "sort_with_"))
 	_test_arr_wrapped_func_a(sort_with_cases, "sort_with")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_rand() -> void:
+	# rand_dir2
+	for i in range(1000):
+		var r = GG.rand_dir2_()
+		var len_ = r.length()
+		_assert(len_ <= 1.001, true)
+		_assert(r.x >= -1 && r.x <= 1 && r.y >= -1 && r.y <= 1, true)
+
+	# rand_dir3
+	for i in range(1000):
+		var r = GG.rand_dir3_()
+		var len_ = r.length()
+		_assert(len_ <= 1.001, true)
+		_assert(r.x >= -1 && r.x <= 1 && r.y >= -1 && r.y <= 1 && r.z >= -1 && r.z <= 1, true)
+
+	# rand_sign
+	for i in range(100):
+		var r = GG.rand_sign_()
+		_assert([-1, 1].has(r), true)
+
+	# rand_bool
+	for i in range(100):
+		var r = GG.rand_bool_()
+		_assert([true, false].has(r), true)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -930,21 +1046,21 @@ func _test_date() -> void:
 # ----------------------------------------------------------------------------------------------------------------------
 
 func _test_flatten() -> void:
-	var flatten_cases = \
+	var flatten_raw_cases = \
 	  [ [ [], [] ]
 	  , [ [[], []] , []]
 	  , [ [[1, 2], [3]], [1, 2, 3] ]
 	  ]
-	_test_func_a(flatten_cases, GG.flatten)
-	_test_func_a(flatten_cases, funcref(GG, "flatten_"))
-	_test_arr_wrapped_func_a(flatten_cases, "flatten")
+	_test_func_a(flatten_raw_cases, GG.flatten)
+	_test_func_a(flatten_raw_cases, funcref(GG, "flatten_"))
+	_test_arr_wrapped_func_a(flatten_raw_cases, "flatten_raw")
 
-	var flatten_unwrapped_cases = \
+	var flatten_cases = \
 	  [ [ [], [] ]
 	  , [ [G([]), G([])] , []]
 	  , [ [G([1, 2]), G([3])], [1, 2, 3] ]
 	  ]
-	_test_arr_wrapped_func_a(flatten_unwrapped_cases, "flatten_unwrapped")
+	_test_arr_wrapped_func_a(flatten_cases, "flatten")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1115,6 +1231,10 @@ func _test_array_generators() -> void:
 	]
 	_test_func_a(new_array_cases, GG.new_array)
 	_test_func_a(new_array_cases, funcref(GG, "new_array_"))
+	var na_1:= GG.new_array_(0, [2, 1])
+	_assert(na_1, [[0], [0]])
+	na_1[0][0] = 1
+	_assert(na_1, [[1], [0]])
 
 	var generate_array_cases = \
 	[ [GG.id, [], []]
@@ -1125,6 +1245,10 @@ func _test_array_generators() -> void:
 	]
 	_test_func_a(generate_array_cases, GG.generate_array)
 	_test_func_a(generate_array_cases, funcref(GG, "generate_array_"))
+	var ga_1:= GG.generate_array_("xy => 0", [2, 1])
+	_assert(ga_1, [[0], [0]])
+	ga_1[0][0] = 1
+	_assert(ga_1, [[1], [0]])
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1154,9 +1278,94 @@ func _test_batch_field_access() -> void:
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+func _test_grouping() -> void:
+	var group_with_cases:=\
+	[ [ [], "x=>x", [] ]
+	, [ [0], "x=>x", [[0]] ]
+	, [ [0, 0], "x=>x", [[0, 0]] ]
+	, [ [0, 0, 1], "x=>x", [[0, 0], [1]] ]
+	, [ [1, 0, 1], "x=>x", [[1], [0], [1]] ]
+	, [ [1, 0, 0], "x=>x", [[1], [0, 0]] ]
+	, [ [t, f, f, t], "x=>x", [[t], [f, f], [t]] ]
+	, [ [{name = "Walt", rank = 0}, {name = "Muffy", rank = 0}, {name = "Yen", rank = 1}], "x => x.rank", [[{name = "Walt", rank = 0}, {name = "Muffy", rank = 0}], [{name = "Yen", rank = 1}]] ]
+	]
+	_test_func_a(group_with_cases, GG.group_with)
+	_test_func_a(group_with_cases, funcref(GG, "group_with_"))
+	_assert(G([t, f, f, t]).group_with("x => x").map("x=>x.val").val, [[t], [f, f], [t]])
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_transpose() -> void:
+	var transpose_cases:=\
+	[  [  [ [1] ], [ [1] ]  ]
+	,  [  [ [1, 2] ], [ [1], [2] ]  ]
+	,  [  [ [1, 2], [3, 4] ], [ [1, 3], [2, 4] ]  ]
+	,  [  [ [1, 2, 3], [4, 5, 6], [7, 8, 9] ], [ [1, 4, 7], [2, 5, 8], [3, 6, 9] ]  ]
+	]
+	_test_func_a(transpose_cases, GG.transpose)
+	_test_func_a(transpose_cases, funcref(GG, "transpose_"))
+	_assert(G([[1, 2]]).transpose().map("x=>x.val").val, [[1], [2]])
+	_assert(G([[1, 2], [3, 4]]).transpose().map("x=>x.val").val, [[1, 3], [2, 4]])
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_uniq() -> void:
+	var nub_cases:=\
+	[ [ [], [] ]
+	, [ [1], [1] ]
+	, [ [1, 1], [1] ]
+	, [ [1, 1, 2], [1, 2] ]
+	, [ [1, 1, 2, 2, 2], [1, 2] ]
+	, [ ["a", "a", "b", "a"], ["a", "b", "a"] ]
+	, [ [t, f, f, f, t, t, f], [t, f, t, f] ]
+	]
+	_test_func_a(nub_cases, GG.nub)
+	_test_func_a(nub_cases, funcref(GG, "nub_"))
+	_test_arr_wrapped_func_a(nub_cases, "nub")
+
+	var uniq_cases:=\
+	[ [ [], [] ]
+	, [ [1], [1] ]
+	, [ [1, 1], [1] ]
+	, [ [1, 1, 2], [1, 2] ]
+	, [ [1, 1, 2, 2, 2], [1, 2] ]
+	, [ ["a", "a", "b", "a"], ["a", "b"] ]
+	, [ [t, f, f, f, t, t, f], [t, f] ]
+	, [ ["x", "a", "a"], ["x", "a"] ]
+	]
+	_test_func_a(uniq_cases, GG.uniq)
+	_test_func_a(uniq_cases, funcref(GG, "uniq_"))
+	_test_arr_wrapped_func_a(uniq_cases, "uniq")
+
+func _test_format() -> void:
+	var format_float_2_cases = \
+	[ [null, "Null"]
+	, [1.23456, "1.23"]
+	, [1.239, "1.24"]
+	, [-1.23456, "-1.23"]
+	]
+	_test_func_a(format_float_2_cases, GG.format_float_2)
+	_test_func_a(format_float_2_cases, funcref(GG, "format_float_2_"))
+
+	var format_vec2_2_cases = \
+	[ [null, "Null"]
+	, [Vector2(1.2345, 0), "1.23, 0.00"]
+	]
+	_test_func_a(format_vec2_2_cases, GG.format_vec2_2)
+	_test_func_a(format_vec2_2_cases, funcref(GG, "format_vec2_2_"))
+
+	var format_vec3_2_cases = \
+	[ [null, "Null"]
+	, [Vector3(1.2345, 0, 7), "1.23, 0.00, 7.00"]
+	]
+	_test_func_a(format_vec3_2_cases, GG.format_vec3_2)
+	_test_func_a(format_vec3_2_cases, funcref(GG, "format_vec3_2_"))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 func _test_short_example() -> void:
 	var monsters = [
-		Monster.new(0, "Orc"), # hp, name
+		Monster.new(0, "Orc"),
 		Monster.new(5, "Demon"),
 		Monster.new(12, "Amus"),
 		Monster.new(0, "Borg"),
@@ -1173,8 +1382,8 @@ func _test_short_example() -> void:
 	# functional approach, uses lambdas (anonymous functions)
 	var weak_alive_monsters = G(monsters).filter("x => x.is_alive && x.hp < 10").map("x => x.name").val
 
-	assert(weak_alive_monsters_imperative == ["Demon"])
-	assert(weak_alive_monsters == ["Demon"])
+	_assert(weak_alive_monsters_imperative, ["Demon"])
+	_assert(weak_alive_monsters, ["Demon"])
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Nice Examples
@@ -1206,8 +1415,8 @@ func _test_examples() -> void:
 	# Names of Alive Monsters example
 
 	var names_of_alive_monsters = G(monsters).filter_by_fld("is_alive").map_fld("name").val
-	assert(names_of_alive_monsters == ["Demon", "Amus"])
-	assert(monsters.size() == 4) # original monster list is not mutated (changed)
+	_assert(names_of_alive_monsters, ["Demon", "Amus"])
+	_assert(monsters.size(), 4) # original monster list is not mutated (changed)
 
 	# ------------------------------------------------------------------------------------------------------------------
 
@@ -1218,20 +1427,20 @@ func _test_examples() -> void:
 	for monster in monsters:
 		if monster.is_alive && monster.hp < 10:
 			weak_alive_monsters_imperative.push_back(monster.name)
-	assert(weak_alive_monsters_imperative == ["Demon"])
-	assert(monsters.size() == 4)
+	_assert(weak_alive_monsters_imperative, ["Demon"])
+	_assert(monsters.size(), 4)
 
 	# functional approach, uses lambdas (anonymous functions)
 	var weak_alive_monsters = G(monsters).filter("x => x.is_alive && x.hp < 10").map_fld("name").val
-	assert(weak_alive_monsters == ["Demon"])
-	assert(monsters.size() == 4)
+	_assert(weak_alive_monsters, ["Demon"])
+	_assert(monsters.size(), 4)
 
 	# ------------------------------------------------------------------------------------------------------------------
 
 	# an older approach of a similar problem
 	var names_of_spongy_monsters = G(monsters).filter_fn(F_raw("x => x.hp >= 10")).map_fld("name").val
-	assert(names_of_spongy_monsters == ["Amus"])
-	assert(monsters.size() == 4)
+	_assert(names_of_spongy_monsters, ["Amus"])
+	_assert(monsters.size(), 4)
 
 	# ------------------------------------------------------------------------------------------------------------------
 
@@ -1245,7 +1454,7 @@ func _test_examples() -> void:
 	  [GG.map, GG.capitalize], # ["Morbi", "Id", "Mauris"]
 	  GG.unwords # "Morbi Id Mauris"
 	])
-	assert(three_words_capitalized == "Morbi Id Mauris")
+	_assert(three_words_capitalized, "Morbi Id Mauris")
 
 # For less nice examples of concrete functions and results see the tests above these nicer examples.
 #
