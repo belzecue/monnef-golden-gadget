@@ -98,6 +98,7 @@ While I tried to optimize most functions, using this library will probably lead 
 
 | Godot | Golden Gadget |
 | ----- | ------------- |
+| 3.1.1 | 0.3.0         |
 | 3.1.1 | 0.2.0         |
 
 It is very likely that the library will be compatible across same main Godot version (e.g. if it's tested with 3.1.1, it most likely will work with 3.2.1 as well).
