@@ -1,0 +1,6 @@
+image: codedarigan/godot_headless_ci:latest
+
+test:
+  stage: test
+  script:
+    - godot goldenGadget/GGTestsRunner.tscn
