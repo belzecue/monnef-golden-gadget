@@ -93,13 +93,35 @@ All functions should be [documented](docs/index.md) (either in [main file](golde
 
 While I tried to optimize most functions, using this library will probably lead to worse performance compared to native solutions (e.g. using `for`s, mutable variables). It is a price for nice abstractions. But looking at the future - when JIT arrives, differences in performance might not be significant. Generally, I would not recommend building too many wrappers (`arr`, `G`) in `_process` and `_physics_process` especially if you are targeting mobile platforms. (You can use most functions directly from `GG` without an array wrapper.)
 
+ Development
+-------------
+Open project in Godot and hack away. Run the project to start tests (results will be in output tab).
+
+If you want to run tests from a command line, navigate to the project directory and run:
+```sh
+$ godot
+Godot Engine v3.2.1.stable.official - https://godotengine.org
+OpenGL ES 3.0 Renderer: GeForce RTX 2080 Ti/PCIe/SSE2
+
+[GG] Golden Gadget Tests: SUCCESS in 0.026s (279 - 305)
+```
+or directly reference the test runner scene:
+```sh
+$ godot goldenGadget/GGTestsRunner.tscn
+Godot Engine v3.2.1.stable.official - https://godotengine.org
+OpenGL ES 3.0 Renderer: GeForce RTX 2080 Ti/PCIe/SSE2
+
+[GG] Golden Gadget Tests: SUCCESS in 0.026s (279 - 305)
+```
+assuming you have a `godot` binary in your path. If you don't want any graphical output (window being opened), you can use a headless version of Godot.
+
  Compatibility
 ---------------
 
-| Godot | Golden Gadget |
-| ----- | ------------- |
-| 3.1.1 | 0.3.0         |
-| 3.1.1 | 0.2.0         |
+| Godot        | Golden Gadget |
+| ------------ | ------------- |
+| 3.1.1, 3.2.1 | 0.3.0         |
+| 3.1.1        | 0.2.0         |
 
 It is very likely that the library will be compatible across same main Godot version (e.g. if it's tested with 3.1.1, it most likely will work with 3.2.1 as well).
 
