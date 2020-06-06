@@ -4,3 +4,12 @@ test:
   stage: test
   script:
     - godot goldenGadget/GGTestsRunner.tscn
+
+pages:
+  script:
+    - cp -r docs/dist public
+  artifacts:
+    paths:
+      - public
+  only:
+    - master

@@ -1,3 +1,5 @@
-outputDir: ./docs
+outputDir: ./docs/md/api
 projectName: Golden Gadget
 inputDir: goldenGadget
+generateToc: false
+
