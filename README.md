@@ -7,8 +7,11 @@ Status: ⚗️ **beta** (main functionality is implemented, API changes should b
 
 🤖️️ All pure functions are covered by [tests](goldenGadget/GGTests.gd).
 
-[📑 Documentation](docs/index.md)
----------------------------------
+📑 Documentation
+---------------
+Please see the **[website](https://monnef.gitlab.io/golden-gadget)**.
+
+Old docs are available there: [docs/md/api/index.md](docs/md/api/index.md)
 
 🪀 Examples
 -----------
