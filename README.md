@@ -1,3 +1,6 @@
+[![pipeline status](https://gitlab.com/monnef/golden-gadget/badges/master/pipeline.svg)](https://gitlab.com/monnef/golden-gadget/-/commits/master)
+
+
 🧰 Golden Gadget 🌟
 ===================
 
