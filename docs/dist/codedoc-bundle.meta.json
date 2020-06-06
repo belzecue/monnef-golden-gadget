@@ -1,0 +1,96 @@
+{
+  "init": [
+    {
+      "name": "initJssCs",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/transport/setup-jss.js",
+      "hash": "0BRqHt0sdpzKlM/pBRD/zA=="
+    },
+    {
+      "name": "installTheme",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/content/theme.ts",
+      "hash": "0CFKtAQ6Qbi+fF9ghevv4w=="
+    },
+    {
+      "name": "codeSelection",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/code/selection.js",
+      "hash": "0WemT6eUwx5jNn7s3w1Bwg=="
+    },
+    {
+      "name": "sameLineLengthInCodes",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/code/same-line-length.js",
+      "hash": "nmCj1uaRH7hAI7SOTi4Wjg=="
+    },
+    {
+      "name": "initHintBox",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/code/line-hint/index.js",
+      "hash": "Ai9T8zqiNoHsCGJx2m86Xg=="
+    },
+    {
+      "name": "initCodeLineRef",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/code/line-ref/index.js",
+      "hash": "uqOfhY2hT8Xrc5+4xA4a7g=="
+    },
+    {
+      "name": "initSmartCopy",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/code/smart-copy.js",
+      "hash": "jb354/SvtkQr88py8Tnp8Q=="
+    },
+    {
+      "name": "copyHeadings",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/heading/copy-headings.js",
+      "hash": "csFiokJ5JTEPpu+OfauQZA=="
+    },
+    {
+      "name": "contentNavHighlight",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/contentnav/highlight.js",
+      "hash": "0C+v5M5cm0Lt2vedhHRK5g=="
+    },
+    {
+      "name": "loadDeferredIFrames",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/transport/deferred-iframe.js",
+      "hash": "ZsvmCyuiyXAbzeMWvO1TmA=="
+    },
+    {
+      "name": "smoothLoading",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/transport/smooth-loading.js",
+      "hash": "hIuDIn5FMXD0nPd4M9pNPA=="
+    },
+    {
+      "name": "tocHighlight",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/toc-highlight.js",
+      "hash": "gk1GWE3x9sq5gg7L9EAB7A=="
+    },
+    {
+      "name": "postNavSearch",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/search/post-nav/index.js",
+      "hash": "xknflN9jSosLZL17cdqPGQ=="
+    }
+  ],
+  "components": [
+    {
+      "name": "ToCPrevNext",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/prevnext/index.js",
+      "hash": "z2F3XqEzdQUl9R5iISGZtg=="
+    },
+    {
+      "name": "ToCToggle",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/toggle/index.js",
+      "hash": "4XMC1NeTEykJLzeFI8DSLw=="
+    },
+    {
+      "name": "DarkModeSwitch",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/darkmode/index.js",
+      "hash": "DsgX5+z3QZJ9FJUH2iwk8w=="
+    },
+    {
+      "name": "ConfigTransport",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/transport/config.js",
+      "hash": "B4Kk3spEGG1aHAK8LunwuQ=="
+    }
+  ],
+  "renderer": {
+    "name": "getRenderer",
+    "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/transport/renderer.js",
+    "hash": "I3yudaeTxFP0cqkFnZlx8w=="
+  }
+}
