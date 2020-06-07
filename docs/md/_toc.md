@@ -1,4 +1,5 @@
 [Home](/)
-[API](/api)
+[Installation](/installation)
+[API](/api/index)
 
 ---

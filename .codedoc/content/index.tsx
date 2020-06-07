@@ -20,10 +20,11 @@ export function content(_content: HTMLElement, toc: HTMLElement, renderer: Rende
           header={<Header {...config}/>}
           footer={<Footer {...config}/>}
           toc={
-            <ToC search={
-                  config.misc?.github ? 
+            <ToC default="open"
+              search={
+                  config.misc?.github ?
                   <GithubSearch$
-                    repo={config.misc.github.repo} 
+                    repo={config.misc.github.repo}
                     user={config.misc.github.user}
                     root={config.src.base}
                     pick={config.src.pick.source}

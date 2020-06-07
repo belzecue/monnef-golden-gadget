@@ -14,10 +14,13 @@ export const config = /*#__PURE__*/configuration({
 
   dest: {
     html: 'docs/dist',
-    assets: 'docs/dist',
+    assets: 'docs/assets',
     bundle: '.',
     styles: '.',
     namespace: '/golden-gadget'
-  }
+  },
 
+  misc: {
+    gitlab: {user: 'monnef', repo: 'golden-gadget'}
+  }
 });

@@ -71,7 +71,7 @@ Similar to [map_fn](#map_fn--GGArray), but also supports function-like type.
 **Type parameters**:   
 `U`: `any` Output [GGArray](#GGArray) item type
 
-**Parameters**:   
+**Parameters**:\
 `f`: `FuncLike<T, U>` Mapping function  
 `ctx`: `any` Context for function
 
