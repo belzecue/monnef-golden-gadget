@@ -22,7 +22,7 @@ Inner [Array](#Array). Usually used to end [GGArray](#GGArray) chains.
 
 **Type**: `Array<T>` 
 
-**Examples**:   
+**Examples**: \
 `G([1, 2]).val` returns `[1, 2]`
 
 ---
@@ -32,7 +32,7 @@ Get length of the wrapped array.
 
 **Type**: `int` 
 
-**Examples**:   
+**Examples**: \
 `G([1, 2]).size` returns `2`
 
 ---
@@ -42,8 +42,8 @@ Is the wrapped array empty?
 
 **Type**: `bool` 
 
-**Examples**:   
-`G([]).is_empty` returns `true`  
+**Examples**: \
+`G([]).is_empty` returns `true`\
 `G([1, 2]).is_empty` returns `false`
 
 ---
@@ -51,16 +51,16 @@ Is the wrapped array empty?
 ### func <span id="map_fn--GGArray"></span>`map_fn`(`f`, `ctx` = `GGI._EMPTY_CONTEXT`) -> `GGArray`
 Map every value in an array using a given function.  
 
-**Type parameters**:   
+**Type parameters**: \
 `U`: `any` Output [GGArray](#GGArray) item type
 
-**Parameters**:   
-`f`: `Func<T, U>` Mapping function (`FuncRef` or `CtxFRef1`)  
+**Parameters**: \
+`f`: `Func<T, U>` Mapping function (`FuncRef` or `CtxFRef1`)\
 `ctx`: `any` Context for function
 
 **Returns**: `U` 
 
-**Examples**:   
+**Examples**: \
 `G([1, 2]).map_fn(GG.inc_).val` returns `[2, 3]`
 
 ---
@@ -68,16 +68,16 @@ Map every value in an array using a given function.
 ### func <span id="map--GGArray"></span>`map`(`f`, `ctx` = `GGI._EMPTY_CONTEXT`) -> `GGArray`
 Similar to [map_fn](#map_fn--GGArray), but also supports function-like type.  
 
-**Type parameters**:   
+**Type parameters**: \
 `U`: `any` Output [GGArray](#GGArray) item type
 
-**Parameters**:\
-`f`: `FuncLike<T, U>` Mapping function  
+**Parameters**: \
+`f`: `FuncLike<T, U>` Mapping function\
 `ctx`: `any` Context for function
 
 **Returns**: `U` 
 
-**Examples**:   
+**Examples**: \
 `G([1, 2]).map("x => x + 1").val` returns `[2, 3]`
 
 ---
@@ -95,7 +95,7 @@ Map an inner method (a method on objects in [GGArray](#GGArray) item).
 ### func <span id="map_fld--GGArray"></span>`map_fld`(`field_name`: `String`) -> `GGArray`
 Map a field in `Object` or `Dictionary`.  
 
-**Examples**:   
+**Examples**: \
 `G([{name = "Spock"}, {name = "Scotty"}]).map_fld("name").val` returns `["Spock", "Scotty"]`
 
 ---
@@ -103,7 +103,7 @@ Map a field in `Object` or `Dictionary`.
 ### func <span id="for_each--GGArray"></span>`for_each`(`f`, `ctx` = `GGI._EMPTY_CONTEXT`) -> `void`
 Call a function for every value in an array.  
 
-**Examples**:   
+**Examples**: \
 `G(["Firefly", "Daedalus"]).for_each("x -> print(x)")` prints `Firefly` and `Daedalus` on separate lines (two calls)
 
 ---
@@ -111,8 +111,8 @@ Call a function for every value in an array.
 ### func <span id="join--GGArray"></span>`join`(`delim`: `String` = `""`, `before`: `String` = `""`, `after`: `String` = `""`) -> `String`
 Join an array of `String`s.  
 
-**Examples**:   
-`G(["Dog", "Cat", "Frog"]).join(", ")` returns `"Dog, Cat, Frog"`  
+**Examples**: \
+`G(["Dog", "Cat", "Frog"]).join(", ")` returns `"Dog, Cat, Frog"`\
 `G([1, 2, 3]).join(", ", "<", ">")` returns `"<1, 2, 3>"`
 
 ---
@@ -130,7 +130,7 @@ Filter out values from an array for which predicate function returns `false`.
 ### func <span id="filter--GGArray"></span>`filter`(`predicate`, `ctx` = `GGI._EMPTY_CONTEXT`) -> `GGArray`
 Similar to [filter_fn](#filter_fn--GGArray), but supports [FuncLike](#FuncLike).  
 
-**Examples**:   
+**Examples**: \
 `G(range(-4, 4)).filter("x => x >= 2").val` returns `[2, 3]`
 
 ---
@@ -148,7 +148,7 @@ Filter contents using a method on each item in an array.
 ### func <span id="filter_by_fld--GGArray"></span>`filter_by_fld`(`field_name`: `String`) -> `GGArray`
 Filter an array of objects using `bool` field.  
 
-**Examples**:   
+**Examples**: \
 `G([{enabled = true, id = 0}, {enabled = false, id = 1}, {enabled = true, id = 2}]).filter_by_fld("enabled").map_fld("id").val` returns `[0, 2]`
 
 ---
@@ -156,7 +156,7 @@ Filter an array of objects using `bool` field.
 ### func <span id="filter_by_fld_val--GGArray"></span>`filter_by_fld_val`(`field_name`: `String`, `field_value`) -> `GGArray`
 Filter an array of objects using one field and field value.  
 
-**Examples**:   
+**Examples**: \
 `G([{id = 0, name = "Zero"}, {id = 1, name = "One"}]).filter_by_fld_val("id", 1).map_fld("name").val` returns `["One"]`
 
 ---
@@ -164,7 +164,7 @@ Filter an array of objects using one field and field value.
 ### func <span id="without--GGArray"></span>`without`(`value_to_omit`) -> `GGArray`
 Return a new [GGArray](#GGArray) omitting given value.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 1]).without(1).val` returns `[2]`
 
 ---
@@ -172,7 +172,7 @@ Return a new [GGArray](#GGArray) omitting given value.
 ### func <span id="compact--GGArray"></span>`compact`() -> `GGArray`
 Return a new [GGArray](#GGArray) omitting `null` items.  
 
-**Examples**:   
+**Examples**: \
 `G([1, null, 3]).compact().val` returns `[1, 3]`
 
 ---
@@ -180,9 +180,9 @@ Return a new [GGArray](#GGArray) omitting `null` items.
 ### func <span id="find_or_null--GGArray"></span>`find_or_null`(`predicate`, `ctx` = `GGI._EMPTY_CONTEXT`)
 Find a first element for which predicate holds. Crash on no match.  
 
-**Examples**:   
-`G([1, 2, 3], "x => x > 1")` returns `2`  
-`G([1], "x => x > 1")` returns `null`  
+**Examples**: \
+`G([1, 2, 3], "x => x > 1")` returns `2`\
+`G([1], "x => x > 1")` returns `null`\
 `G([{id = 4, name = "Alice"}, {id = 7, name = "Bob"}]).find_or_null("x => x.name.length() == 3").id` returns `7`
 
 ---
@@ -195,7 +195,7 @@ Find a first element for which predicate holds. Return `null` when no match is f
 ### func <span id="find_by_fld_val--GGArray"></span>`find_by_fld_val`(`field_name`: `String`, `field_value`)
 Find an item by a value of a field.  
 
-**Examples**:   
+**Examples**: \
 `G([{id = 0, name = "Zero"}, {id = 1, name = "One"}]).find_by_fld_val("id", 1).name` returns `"One"`
 
 ---
@@ -203,8 +203,8 @@ Find an item by a value of a field.
 ### func <span id="find_index_or_null--GGArray"></span>`find_index_or_null`(`predicate`, `ctx` = `GGI._EMPTY_CONTEXT`)
 Find item in array for which precate holds and return its index.  
 
-**Parameters**:   
-`predicate`: `Func<T, bool>`   
+**Parameters**: \
+`predicate`: `Func<T, bool>` \
 `ctx`: `any` 
 
 **Returns**: `int | null` 
@@ -214,8 +214,8 @@ Find item in array for which precate holds and return its index.
 ### func <span id="find_index--GGArray"></span>`find_index`(`predicate`, `ctx` = `GGI._EMPTY_CONTEXT`)
 Find item in array for which precate holds and return its index. Crash when valid item isn't found.  
 
-**Parameters**:   
-`predicate`: `Func<T, bool>`   
+**Parameters**: \
+`predicate`: `Func<T, bool>` \
 `ctx`: `any` 
 
 **Returns**: `int` 
@@ -225,7 +225,7 @@ Find item in array for which precate holds and return its index. Crash when vali
 ### func <span id="foldl_fn--GGArray"></span>`foldl_fn`(`f`: `FuncRef`, `zero`, `ctx` = `GGI._EMPTY_CONTEXT`)
 Takes an operator and a zero (initial) value, reduces array to one value by repeatedly applying the operator to items from an array.  
 
-**Parameters**:   
+**Parameters**: \
 `f`: `Func<R, T, R>` Operator
 
 **Returns**: `R` 
@@ -235,7 +235,7 @@ Takes an operator and a zero (initial) value, reduces array to one value by repe
 ### func <span id="foldl--GGArray"></span>`foldl`(`f`, `zero`, `ctx` = `GGI._EMPTY_CONTEXT`)
 Similar to [foldl_fn](#foldl_fn--GGArray), but also supports [FuncLike](#FuncLike).  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3]).foldl("a, x => a + x", -6)` returns `0` (-6 + 1 + 2 + 3)
 
 ---
@@ -258,7 +258,7 @@ Calls [FuncLike](#FuncLike) on the inner value and wraps the result in [GGArray]
 ### func <span id="head--GGArray"></span>`head`()
 Get first item or crash on empty array.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3]).head()` returns `1`
 
 ---
@@ -266,7 +266,7 @@ Get first item or crash on empty array.
 ### func <span id="head_or_null--GGArray"></span>`head_or_null`()
 Get first item or `null` for empty array.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3]).head_or_null()` returns `1`
 
 ---
@@ -274,7 +274,7 @@ Get first item or `null` for empty array.
 ### func <span id="last--GGArray"></span>`last`()
 Get last item or crash on empty array.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3]).last()` returns `3`
 
 ---
@@ -282,7 +282,7 @@ Get last item or crash on empty array.
 ### func <span id="last_or_null--GGArray"></span>`last_or_null`()
 Get last item or `null` for empty array.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3]).last()` returns `3`
 
 ---
@@ -290,7 +290,7 @@ Get last item or `null` for empty array.
 ### func <span id="tail--GGArray"></span>`tail`() -> `GGArray`
 Get all items except first one.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3]).tail().val` returns `[2, 3]`
 
 ---
@@ -298,7 +298,7 @@ Get all items except first one.
 ### func <span id="init--GGArray"></span>`init`() -> `GGArray`
 Get all items except last one.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3]).init().val` returns `[1, 2]`
 
 ---
@@ -327,8 +327,8 @@ Sort an array using a mapping function (result is sorted on values obtained from
 Zip together two arrays.  
 A length of a result is same length as a length of a shorter array (meaning arrays are **not** padded with `null`s to be of same length, but the larger array is truncated to match the length of the shorter one).  
 
-**Examples**:   
-`G([1, 2]).zip(["a", "b"]).val` returns `[[1, "a"], [2, "b"]]`  
+**Examples**: \
+`G([1, 2]).zip(["a", "b"]).val` returns `[[1, "a"], [2, "b"]]`\
 `G([1]).zip(["a", "b"]).val` returns `[[1, "a"]]`
 
 ---
@@ -342,9 +342,9 @@ Can be used to suppress `The function 'map_out_mtd()' returns a value, but this 
 ### func <span id="sample--GGArray"></span>`sample`()
 Get a random item (crashes on an empty array).  
 
-**Examples**:   
-`G([1]).sample()` returns `1`  
-`G(["Frog", "Toad"]).sample()` returns `"Frog"` or `"Toad"` with an equal chance  
+**Examples**: \
+`G([1]).sample()` returns `1`\
+`G(["Frog", "Toad"]).sample()` returns `"Frog"` or `"Toad"` with an equal chance\
 `G([]).sample()` crashes
 
 ---
@@ -352,9 +352,9 @@ Get a random item (crashes on an empty array).
 ### func <span id="sample_or_null--GGArray"></span>`sample_or_null`()
 Get a random item (`null` on an empty array).  
 
-**Examples**:   
-`G([1]).sample_or_null()` returns `1`  
-`G(["Frog", "Toad"]).sample_or_null()` returns `"Frog"` or `"Toad"` with an equal chance  
+**Examples**: \
+`G([1]).sample_or_null()` returns `1`\
+`G(["Frog", "Toad"]).sample_or_null()` returns `"Frog"` or `"Toad"` with an equal chance\
 `G([]).sample_or_null()` returns `null`
 
 ---
@@ -362,7 +362,7 @@ Get a random item (`null` on an empty array).
 ### func <span id="flatten_raw--GGArray"></span>`flatten_raw`() -> `GGArray`
 Flattens [GGArray](#GGArray) of `Array`s to [GGArray](#GGArray) (spreads items).  
 
-**Examples**:   
+**Examples**: \
 `G([[1, 2], [3]]).flatten_raw().val` returns `[1, 2, 3]`
 
 ---
@@ -370,7 +370,7 @@ Flattens [GGArray](#GGArray) of `Array`s to [GGArray](#GGArray) (spreads items).
 ### func <span id="flatten--GGArray"></span>`flatten`() -> `GGArray`
 Flattens [GGArray](#GGArray) of [GGArrays](#GGArray) to [GGArray](#GGArray) (spreads items).  
 
-**Examples**:   
+**Examples**: \
 `G([G([1, 2]), G([3])]).flatten().val` returns `[1, 2, 3]`
 
 ---
@@ -378,7 +378,7 @@ Flattens [GGArray](#GGArray) of [GGArrays](#GGArray) to [GGArray](#GGArray) (spr
 ### func <span id="take--GGArray"></span>`take`(`n`: `int`) -> `GGArray`
 Take `n` items from a start of an array.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3, 4, 5]).take(2).val` returns `[1, 2]`
 
 ---
@@ -386,7 +386,7 @@ Take `n` items from a start of an array.
 ### func <span id="take_right--GGArray"></span>`take_right`(`n`: `int`) -> `GGArray`
 Take `n` items from an end of an array.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3, 4, 5]).take_right(2).val` returns `[4, 5]`
 
 ---
@@ -394,7 +394,7 @@ Take `n` items from an end of an array.
 ### func <span id="take_while--GGArray"></span>`take_while`(`p`) -> `GGArray`
 Keep taking items from an array (from start) until predicate stops holding.  
 
-**Parameters**:   
+**Parameters**: \
 `p`: `FuncLike<T, bool>` Predicate
 
 ---
@@ -402,7 +402,7 @@ Keep taking items from an array (from start) until predicate stops holding.
 ### func <span id="drop--GGArray"></span>`drop`(`n`: `int`) -> `GGArray`
 Drop (skip) n items from a start of an array.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3, 4, 5]).drop(2).val` returns `[3, 4, 5]`
 
 ---
@@ -410,7 +410,7 @@ Drop (skip) n items from a start of an array.
 ### func <span id="drop_right--GGArray"></span>`drop_right`(`n`: `int`) -> `GGArray`
 Drop (skip) n items from an end of an array.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3, 4, 5]).drop_right(2).val` returns `[1, 2, 3]`
 
 ---
@@ -418,7 +418,7 @@ Drop (skip) n items from an end of an array.
 ### func <span id="reverse--GGArray"></span>`reverse`() -> `GGArray`
 Reverse order of items in an array.  
 
-**Examples**:   
+**Examples**: \
 `G([1, 2, 3]).reverse().val` returns `[3, 2, 1]`
 
 ---
@@ -426,7 +426,7 @@ Reverse order of items in an array.
 ### func <span id="tap--GGArray"></span>`tap`(`f`) -> `GGArray`
 Call FuncLike with inner value, ignore call result, return same array.  
 
-**Parameters**:   
+**Parameters**: \
 `f`: `FuncLike<T, any>` 
 
 **Returns**: `GGArray<T>` 
@@ -436,7 +436,7 @@ Call FuncLike with inner value, ignore call result, return same array.
 ### func <span id="sum--GGArray"></span>`sum`() -> `int`
 Sum all items in an array.  
 
-**Examples**:   
+**Examples**: \
 `G([2, 3, 5]).sum()` returns `10`
 
 ---
@@ -444,7 +444,7 @@ Sum all items in an array.
 ### func <span id="product--GGArray"></span>`product`() -> `int`
 Multiply all items in an array.  
 
-**Examples**:   
+**Examples**: \
 `G([2, 3, 5]).product()` returns `30`
 
 ---
@@ -452,14 +452,14 @@ Multiply all items in an array.
 ### func <span id="all--GGArray"></span>`all`(`p`) -> `bool`
 Does a predicate hold for all items?  
 
-**Parameters**:   
+**Parameters**: \
 `p`: `FuncLike<T, bool>` 
 
 **Returns**: `bool` 
 
-**Examples**:   
-`G([]).all("x => x > 0")` returns `true`  
-`G([1, 2, 1]).all("x => x > 0")` returns `true`  
+**Examples**: \
+`G([]).all("x => x > 0")` returns `true`\
+`G([1, 2, 1]).all("x => x > 0")` returns `true`\
 `G([1, 0, 1]).all("x => x > 0")` returns `false`
 
 ---
@@ -467,14 +467,14 @@ Does a predicate hold for all items?
 ### func <span id="any--GGArray"></span>`any`(`p`) -> `bool`
 Does a predicate hold for any item?  
 
-**Parameters**:   
+**Parameters**: \
 `p`: `FuncLike<T, bool>` 
 
 **Returns**: `bool` 
 
-**Examples**:   
-`G([]).any("x => x == 2")` returns `false`  
-`G([1, 2, 1]).any("x => x == 2")` returns `true`  
+**Examples**: \
+`G([]).any("x => x == 2")` returns `false`\
+`G([1, 2, 1]).any("x => x == 2")` returns `true`\
 `G([1, -1, 1]).any("x => x == 2")` returns `false`
 
 ---
@@ -502,15 +502,15 @@ Concatenate arrays (`other` to start)
 ### func <span id="group_with--GGArray"></span>`group_with`(`f`) -> `GGArray`
 Go through an array in order and group together sequences of items for which `f` returns same value.  
 
-**Type parameters**:   
+**Type parameters**: \
 `U`: `any` Type of values for comparison (usually a type of field of `Object`/`Dictionary`)
 
-**Parameters**:   
+**Parameters**: \
 `f`: `FuncLike<T, U>` Mapping function used on all items and retuned values are used for comparisons
 
 **Returns**: `GGArray<GGArray<T>>` Grouped items
 
-**Examples**:   
+**Examples**: \
 `G([{name = "Walt", rank = 0}, {name = "Muffy", rank = 0}, {name = "Yen", rank = 1}]).group_with("x => x.rank")` returns `GGArray`s equivalent to `[[{name = "Walt", rank = 0}, {name = "Muffy", rank = 0}], [{name = "Yen", rank = 1}]]`
 
 ---
@@ -518,7 +518,7 @@ Go through an array in order and group together sequences of items for which `f`
 ### func <span id="transpose--GGArray"></span>`transpose`() -> `GGArray`
 Transpose a 2D matrix.  
 
-**Examples**:   
+**Examples**: \
 `G([[1, 2], [3, 4]]).transpose()` returns `GGArray`s equivalent to `[[1, 3], [2, 4]]`
 
 ---
@@ -560,7 +560,7 @@ Wraps `Array` into [GGArray](#GGArray).
 Recommended "import" (code at a start of a file we want to use the `arr` in):  
 `func G(arr) -> GGArray: return GG.arr(arr)`  
 
-**Parameters**:   
+**Parameters**: \
 `arr`: `Array<T>` array to wrap
 
 **Returns**: `GGArray<T>` wrapped array
@@ -570,7 +570,7 @@ Recommended "import" (code at a start of a file we want to use the `arr` in):
 ### func <span id="quit_--GoldenGadget"></span>`quit_`(`error_code`: `int` = `0`) -> `void`
 Terminate/halt/quit program.  
 
-**Parameters**:   
+**Parameters**: \
 `error_code`: `int` Exit code returned from the Godot process (0 means normal exit, >0 means an error)
 
 ---
@@ -608,7 +608,7 @@ subtracts second argument from first
 ### func <span id="a_and_--GoldenGadget"></span>`a_and_`(`x`: `Array`) -> `bool`
 `and` operation performed on array of bools  
 
-**Parameters**:   
+**Parameters**: \
 `x`: `Array<bool>` 
 
 **Returns**: `bool` 
@@ -618,7 +618,7 @@ subtracts second argument from first
 ### func <span id="a_or_--GoldenGadget"></span>`a_or_`(`x`: `Array`) -> `bool`
 `or` operation performed on array of `bool`s  
 
-**Parameters**:   
+**Parameters**: \
 `x`: `Array<bool>` 
 
 **Returns**: `bool` 
@@ -688,7 +688,7 @@ Decapitalize first character of string (doesn't touch other characters).
 ### func <span id="noop1_--GoldenGadget"></span>`noop1_`(`x`) -> `void`
 Do nothing.  
 
-**Parameters**:   
+**Parameters**: \
 `x`: `any` 
 
 ---
@@ -696,8 +696,8 @@ Do nothing.
 ### func <span id="noop2_--GoldenGadget"></span>`noop2_`(`x`, `y`) -> `void`
 Do nothing.  
 
-**Parameters**:   
-`x`: `any`   
+**Parameters**: \
+`x`: `any` \
 `y`: `any` 
 
 ---
@@ -705,9 +705,9 @@ Do nothing.
 ### func <span id="noop3_--GoldenGadget"></span>`noop3_`(`x`, `y`, `z`) -> `void`
 Do nothing.  
 
-**Parameters**:   
-`x`: `any`   
-`y`: `any`   
+**Parameters**: \
+`x`: `any` \
+`y`: `any` \
 `z`: `any` 
 
 ---
@@ -715,10 +715,10 @@ Do nothing.
 ### func <span id="noop4_--GoldenGadget"></span>`noop4_`(`x`, `y`, `z`, `a`) -> `void`
 Do nothing.  
 
-**Parameters**:   
-`x`: `any`   
-`y`: `any`   
-`z`: `any`   
+**Parameters**: \
+`x`: `any` \
+`y`: `any` \
+`z`: `any` \
 `a`: `any` 
 
 ---
@@ -731,8 +731,8 @@ Multiple two numbers.
 ### func <span id="modulo_--GoldenGadget"></span>`modulo_`(`x`, `y`)
 Calculate modulo of two numbers (of same type).  
 
-**Parameters**:   
-`x`: `int | float` First number  
+**Parameters**: \
+`x`: `int | float` First number\
 `y`: `int | float` Second number
 
 **Returns**: `int | float` Modulo of input numbers, has same type.
@@ -763,8 +763,8 @@ Logic not.
 Get a value in a given field.  
 Crashes on a missing field.  
 
-**Parameters**:   
-`obj`: `Object | Dictionary`   
+**Parameters**: \
+`obj`: `Object | Dictionary` \
 `field_name`: `String` 
 
 **Returns**: `any` 
@@ -774,9 +774,9 @@ Crashes on a missing field.
 ### func <span id="get_fld_or_else_--GoldenGadget"></span>`get_fld_or_else_`(`obj`, `field_name`: `String`, `default`)
 Get a value in a given field. If the field is missing, return a given default value.  
 
-**Parameters**:   
-`obj`: `Object | Dictionary`   
-`field_name`: `String`   
+**Parameters**: \
+`obj`: `Object | Dictionary` \
+`field_name`: `String` \
 `default`: `any` 
 
 **Returns**: `any` 
@@ -786,9 +786,9 @@ Get a value in a given field. If the field is missing, return a given default va
 ### func <span id="get_fld_or_null_--GoldenGadget"></span>`get_fld_or_null_`(`obj`, `field_name`: `String`)
 Get a value in a given field. If the field is missing, return `null`.  
 
-**Parameters**:   
-`obj`: `Object | Dictionary`   
-`field_name`: `String`   
+**Parameters**: \
+`obj`: `Object | Dictionary` \
+`field_name`: `String` \
 `default`: `any` 
 
 **Returns**: `any` 
@@ -823,7 +823,7 @@ Create function-like object depending on type of `f`.
 * `Array` - partial application (creates `CtxFRef1`)  
 `["x, y => x + y", 1]` which is functionally equivalent to `"x => x + 1"`  
 
-**Parameters**:   
+**Parameters**: \
 `f`: `FuncRef | String | Array<any>` 
 
 **Returns**: `FuncRef | CtxFRef1` 
@@ -833,12 +833,12 @@ Create function-like object depending on type of `f`.
 ### func <span id="keys_--GoldenGadget"></span>`keys_`(`obj`)
 Get keys of `Dictionary` or `Object`.  
 
-**Parameters**:   
+**Parameters**: \
 `obj`: `Dictionary | Object` 
 
 **Returns**: `Array<String>` 
 
-**Examples**:   
+**Examples**: \
 `GG.keys_({a = 1, b = 2})` returns `["a", "b"]`
 
 ---
@@ -847,13 +847,13 @@ Get keys of `Dictionary` or `Object`.
 Get key by given value. Supports `Dictionary` and `Object` (custom classes).  
 Useful for finding a name of an enum item from an item value.  
 
-**Parameters**:   
-`obj`: `Dictionary | Object`   
+**Parameters**: \
+`obj`: `Dictionary | Object` \
 `val`: `any` 
 
 **Returns**: `any | null` Returns `null` if value is not found.
 
-**Examples**:   
+**Examples**: \
 `GG.key_from_val_({a = 1, b = 2}, 1)` returns `"a"`.
 
 ---
@@ -861,15 +861,15 @@ Useful for finding a name of an enum item from an item value.
 ### func <span id="ap_if_defined_--GoldenGadget"></span>`ap_if_defined_`(`obj`, `method_name`: `String`, `args`: `Array`)
 Call a method when the method exists and return its result, otherwise return `null`.  
 
-**Parameters**:   
-`obj`: `Object` Object owning the method  
-`method_name`: `String` Object owning the method  
+**Parameters**: \
+`obj`: `Object` Object owning the method\
+`method_name`: `String` Object owning the method\
 `args`: `Array<any>` Arguments to pass to the method
 
 **Returns**: `any` What method returned, or `null` when `obj` is `null` or `obj` has no such method
 
-**Examples**:   
-`GG.ap_if_defined_(GG, "add_", [2, 5])` returns `7`  
+**Examples**: \
+`GG.ap_if_defined_(GG, "add_", [2, 5])` returns `7`\
 `GG.ap_if_defined_(GG, "_non_existing_method", [2, 5])` returns `null`
 
 ---
@@ -878,16 +878,16 @@ Call a method when the method exists and return its result, otherwise return `nu
 Get a random item from an array.  
 Crashes on an empty array.  
 
-**Type parameters**:   
+**Type parameters**: \
 `T`: `any` type of items in the array
 
-**Parameters**:   
+**Parameters**: \
 `arr`: `Array<T>` the input array
 
 **Returns**: `T` a randomly picked item
 
-**Examples**:   
-`sample_([1, 2])` returns `1` or `2` with equal chance  
+**Examples**: \
+`sample_([1, 2])` returns `1` or `2` with equal chance\
 `sample_([])` crashes
 
 ---
@@ -895,16 +895,16 @@ Crashes on an empty array.
 ### func <span id="sample_or_null_--GoldenGadget"></span>`sample_or_null_`(`arr`: `Array`)
 Get a random item from an array.  
 
-**Type parameters**:   
+**Type parameters**: \
 `T`: `any` type of items in the array
 
-**Parameters**:   
+**Parameters**: \
 `arr`: `Array<T>` the input array
 
 **Returns**: `T | null` a random item, or null for an empty array
 
-**Examples**:   
-`sample_or_null_([1, 2])` returns `1` or `2` with equal chance  
+**Examples**: \
+`sample_or_null_([1, 2])` returns `1` or `2` with equal chance\
 `sample_or_null_([])` returns always `null`
 
 ---
@@ -912,12 +912,12 @@ Get a random item from an array.
 ### func <span id="format_datetime_--GoldenGadget"></span>`format_datetime_`(`date` = `null`) -> `String`
 Format `DateTime` (if no provided, current will be used) in following format: `YYYY-MM-DD--HH-MM-SS`  
 
-**Parameters**:   
+**Parameters**: \
 `date`: `DateTime | null` 
 
 **Returns**: `String` 
 
-**Examples**:   
+**Examples**: \
 Possible output: `"2019-12-19--13-03-18"`
 
 ---
@@ -925,9 +925,9 @@ Possible output: `"2019-12-19--13-03-18"`
 ### func <span id="floats_are_equal_--GoldenGadget"></span>`floats_are_equal_`(`x`: `float`, `y`: `float`, `eps` = `1.0e-4`) -> `bool`
 Test if two `float` values are same (withing maring of `eps`).  
 
-**Parameters**:   
-`x`: `float` first value  
-`y`: `float` second value  
+**Parameters**: \
+`x`: `float` first value\
+`y`: `float` second value\
 `eps`: `float` accepted margin
 
 **Returns**: `bool` 
@@ -937,12 +937,12 @@ Test if two `float` values are same (withing maring of `eps`).
 ### func <span id="format_float_2_--GoldenGadget"></span>`format_float_2_`(`x`) -> `String`
 Format `float` to 2 decimal places.  
 
-**Parameters**:   
+**Parameters**: \
 `x`: `float | null` 
 
 **Returns**: `String` 
 
-**Examples**:   
+**Examples**: \
 `format_float_2_(1.23456)` returns `"1.23"`
 
 ---
@@ -950,12 +950,12 @@ Format `float` to 2 decimal places.
 ### func <span id="format_vec2_2_--GoldenGadget"></span>`format_vec2_2_`(`x`) -> `String`
 Format `Vector2` to 2 decimal places.  
 
-**Parameters**:   
+**Parameters**: \
 `x`: `Vector2 | null` 
 
 **Returns**: `String` 
 
-**Examples**:   
+**Examples**: \
 `format_vec2_2_(Vector2(1.2345, 0))` returns `"1.23, 0.00"`
 
 ---
@@ -963,12 +963,12 @@ Format `Vector2` to 2 decimal places.
 ### func <span id="format_vec3_2_--GoldenGadget"></span>`format_vec3_2_`(`x`) -> `String`
 Format `Vector3` to 2 decimal places.  
 
-**Parameters**:   
+**Parameters**: \
 `x`: `Vector3 | null` 
 
 **Returns**: `String` 
 
-**Examples**:   
+**Examples**: \
 `format_vec3_2_(Vector3(1.2345, 0, 7))` returns `"1.23, 0.00, 7.00"`
 
 ---
@@ -995,7 +995,7 @@ Delete all children of a given parent (calls `queue_free` on children).
 ### func <span id="get_children_rec_--GoldenGadget"></span>`get_children_rec_`(`parent`: `Node`) -> `Array`
 Get recursively all children.  
 
-**Parameters**:   
+**Parameters**: \
 `parent`: `Node` 
 
 **Returns**: `Array<Node>` 
@@ -1005,8 +1005,8 @@ Get recursively all children.
 ### func <span id="get_node_or_crash_--GoldenGadget"></span>`get_node_or_crash_`(`parent`, `path`) -> `Node`
 Safer `get_node` alternative which will crash when a parent, a path or a node are `null`/empty.  
 
-**Parameters**:   
-`parent`: `Node | null` Of which node we want to retrieve a child  
+**Parameters**: \
+`parent`: `Node | null` Of which node we want to retrieve a child\
 `path`: `NodePath | null` Path to a child
 
 **Returns**: `Node | null` Child node or `null` on failure
@@ -1016,8 +1016,8 @@ Safer `get_node` alternative which will crash when a parent, a path or a node ar
 ### func <span id="get_node_or_null_--GoldenGadget"></span>`get_node_or_null_`(`parent`, `path`)
 Get a child node. If there is any problem, return `null`.  
 
-**Parameters**:   
-`parent`: `Node | null` Of which node we want to retrieve a child  
+**Parameters**: \
+`parent`: `Node | null` Of which node we want to retrieve a child\
 `path`: `NodePath | null` Path to a child
 
 **Returns**: `Node | null` Child node or `null` on failure
@@ -1027,10 +1027,10 @@ Get a child node. If there is any problem, return `null`.
 ### func <span id="create_timer_and_start_--GoldenGadget"></span>`create_timer_and_start_`(`on`: `Node`, `method_name`: `String`, `time`: `float`, `one_shot` = `true`) -> `Timer`
 Create a `Timer` node, connect timeout signal to the method and start.  
 
-**Parameters**:   
-`on`: `Node` Parent node for `Timer`, contains callback method  
-`method_name`: `String` Name of a method which is called after timer finishes  
-`time`: `float` Amount of time in seconds before callback method is called  
+**Parameters**: \
+`on`: `Node` Parent node for `Timer`, contains callback method\
+`method_name`: `String` Name of a method which is called after timer finishes\
+`time`: `float` Amount of time in seconds before callback method is called\
 `one_shot`: `bool` Should the new `Timer` run in one-shot mode? If it does, `Timer` is destroyed after time elapses, otherwise `Timer` remains.
 
 **Returns**: `Timer` New `Timer` node
@@ -1040,12 +1040,12 @@ Create a `Timer` node, connect timeout signal to the method and start.
 ### func <span id="words_raw_--GoldenGadget"></span>`words_raw_`(`x`: `String`) -> `Array`
 Split a string to an array of words.  
 
-**Parameters**:   
+**Parameters**: \
 `x`: `String` Input string
 
 **Returns**: `Array<String>` words
 
-**Examples**:   
+**Examples**: \
 `words_raw_("a  b")` will return `["a", "b"]`.
 
 ---
@@ -1053,12 +1053,12 @@ Split a string to an array of words.
 ### func <span id="words_--GoldenGadget"></span>`words_`(`x`: `String`) -> `GGArray`
 Split a string to an array of words.  
 
-**Parameters**:   
+**Parameters**: \
 `x`: `String` Input string
 
 **Returns**: `GGArray<String>` words
 
-**Examples**:   
+**Examples**: \
 `words_("a  b")` will return `arr(["a", "b"])`.
 
 ---
@@ -1066,12 +1066,12 @@ Split a string to an array of words.
 ### func <span id="unwords_--GoldenGadget"></span>`unwords_`(`xs`: `Array`) -> `String`
 Join words array to one string  
 
-**Parameters**:   
+**Parameters**: \
 `xs`: `Array<String>` Input array of words
 
 **Returns**: `String` Joined words
 
-**Examples**:   
+**Examples**: \
 `unwords_(["a", "b"])` returns `"a b"`
 
 ---
@@ -1085,12 +1085,12 @@ Same as [lines_](#lines_--GoldenGadget), but returns `Array<String>` instead of 
 ### func <span id="lines_--GoldenGadget"></span>`lines_`(`x`: `String`) -> `GGArray`
 Split string with new line sequences to an array of lines  
 
-**Parameters**:   
+**Parameters**: \
 `x`: `String` Input text
 
 **Returns**: `GGArray<String>` Array containing lines as items (without new line sequences)
 
-**Examples**:   
+**Examples**: \
 `lines_("a\n\nb")` returns `arr(["a", "b"])`
 
 ---
@@ -1098,7 +1098,7 @@ Split string with new line sequences to an array of lines
 ### func <span id="unlines_--GoldenGadget"></span>`unlines_`(`xs`: `Array`) -> `String`
 Join an array of lines to a string.  
 
-**Examples**:   
+**Examples**: \
 `unlines_(["a", "b"])` returns `"a\nb"`
 
 ---
@@ -1109,8 +1109,8 @@ Supports lambdas (string, e.g. `"x => x + 1"`) and partial application of 2 argu
 Options dictionary fields:  
 * print - if `true` then input, middle values and result is printed  
 
-**Examples**:   
-`pipe_(0, [inc_, inc_])` returns `2`, it is equivalent to `inc_(inc_(0))`.  
+**Examples**: \
+`pipe_(0, [inc_, inc_])` returns `2`, it is equivalent to `inc_(inc_(0))`.\
 `pipe_([1, 2], [[GG.take, 1], "xs => xs[0] * 10"])` returns `10`, it is equivalent to `take_([1, 2], 1)[0] * 10`.
 
 ---
@@ -1124,10 +1124,10 @@ If you intend to call the resulting function immediately, use rather [pipe_](#pi
 ### func <span id="id_--GoldenGadget"></span>`id_`(`x`)
 Identity function - returns same value it got in an argument.  
 
-**Type parameters**:   
+**Type parameters**: \
 `T`: `any` 
 
-**Parameters**:   
+**Parameters**: \
 `x`: `T` Input value
 
 **Returns**: `T` Same value as on input
@@ -1138,16 +1138,16 @@ Identity function - returns same value it got in an argument.
 Construct a function accepting one argument.  
 This new function ignores passed argument and always returns `x` (an argument it was created with).  
 
-**Type parameters**:   
+**Type parameters**: \
 `T`: `any` 
 
-**Parameters**:   
+**Parameters**: \
 `x`: `T` Value to be returned from constructed function
 
 **Returns**: `FuncLike<any, T>` 
 
-**Examples**:   
-`const_(1).call_func("Gorn")` returns `1`  
+**Examples**: \
+`const_(1).call_func("Gorn")` returns `1`\
 `const_("Resistance is futile!").call_func("Resist!")` returns `"Resistance is futile!"`
 
 ---
@@ -1155,11 +1155,11 @@ This new function ignores passed argument and always returns `x` (an argument it
 ### func <span id="tap_--GoldenGadget"></span>`tap_`(`x`, `f`)
 Call function-like `f` with `x`, return `x` (ignore return value of `f`).  
 
-**Type parameters**:   
+**Type parameters**: \
 `T`: `any` 
 
-**Parameters**:   
-`x`: `T` Input value  
+**Parameters**: \
+`x`: `T` Input value\
 `f`: `FuncLike<T, any>` Function accepting input value
 
 **Returns**: `T` Input value `x`
@@ -1169,7 +1169,7 @@ Call function-like `f` with `x`, return `x` (ignore return value of `f`).
 ### func <span id="fmt_bool_--GoldenGadget"></span>`fmt_bool_`(`x`: `bool`) -> `String`
 Format bool (default formatting uses upper-case, this function uses lower-case).  
 
-**Parameters**:   
+**Parameters**: \
 `x`: `bool` Input value
 
 **Returns**: `String` Formatted value
@@ -1179,16 +1179,16 @@ Format bool (default formatting uses upper-case, this function uses lower-case).
 ### func <span id="replicate_--GoldenGadget"></span>`replicate_`(`x`, `n`: `int`) -> `Array`
 Create an array of length `n` where all items are `x`.  
 
-**Type parameters**:   
+**Type parameters**: \
 `T`: `any` 
 
-**Parameters**:   
-`x`: `T` Item used for filling the array  
+**Parameters**: \
+`x`: `T` Item used for filling the array\
 `n`: `int` Number of items
 
 **Returns**: `Array<T>` 
 
-**Examples**:   
+**Examples**: \
 `replicate_("a", 3)` returns `["a", "a", "a"]`
 
 ---
@@ -1196,19 +1196,19 @@ Create an array of length `n` where all items are `x`.
 ### func <span id="new_array_--GoldenGadget"></span>`new_array_`(`zero`, `dimensions`: `Array`) -> `Array`
 Create an n-dimensional array and fill its every cell with given `zero` value  
 
-**Type parameters**:   
+**Type parameters**: \
 `T`: `any` 
 
-**Parameters**:   
-`zero`: `T` Value to assign to all cells  
+**Parameters**: \
+`zero`: `T` Value to assign to all cells\
 `dimensions`: `Array<int>` Dimensions (lengths) of new nested array.
 
 **Returns**: `Array<any>` Nested (n-dimensional) array
 
-**Examples**:   
-`new_array_(0, [1])` returns `[0]`  
-`new_array_(0, [3])` returns `[0, 0, 0]`  
-`new_array_(0, [1, 2])` returns `[[0, 0]]`  
+**Examples**: \
+`new_array_(0, [1])` returns `[0]`\
+`new_array_(0, [3])` returns `[0, 0, 0]`\
+`new_array_(0, [1, 2])` returns `[[0, 0]]`\
 `new_array_("x", [2, 3])` returns `[["x", "x", "x"], ["x", "x", "x"]]`
 
 ---
@@ -1216,17 +1216,17 @@ Create an n-dimensional array and fill its every cell with given `zero` value
 ### func <span id="generate_array_--GoldenGadget"></span>`generate_array_`(`cell_value_getter`, `dimensions`: `Array`) -> `Array`
 Create an n-dimensional array and fill its every cell with a value returned by `cell_value_getter`.  
 
-**Type parameters**:   
+**Type parameters**: \
 `T`: `any` 
 
-**Parameters**:   
-`cell_value_getter`: `FuncLike<Array<int>, T>` Function which accepts coordinates (array of numbers) and returns a value for a cell on those coordinates  
+**Parameters**: \
+`cell_value_getter`: `FuncLike<Array<int>, T>` Function which accepts coordinates (array of numbers) and returns a value for a cell on those coordinates\
 `dimensions`: `Array<int>` Dimensions (lengths) of new nested array.
 
 **Returns**: `Array<any>` Nested (n-dimensional) array
 
-**Examples**:   
-`generate_array_(GG.id, [3])` returns `[[0], [1], [2]]`  
+**Examples**: \
+`generate_array_(GG.id, [3])` returns `[[0], [1], [2]]`\
 `generate_array_("x => x[0] * 10 + x[1]", [2, 3])` returns `[ [0, 1, 2], [10, 11, 12] ]`
 
 ---
@@ -1234,12 +1234,12 @@ Create an n-dimensional array and fill its every cell with a value returned by `
 ### func <span id="float_arr_to_int_arr_--GoldenGadget"></span>`float_arr_to_int_arr_`(`arr`: `Array`) -> `Array`
 Convert array of floats to array of integers. Useful for correcting parsed JSONs.  
 
-**Parameters**:   
+**Parameters**: \
 `arr`: `Array<float>` 
 
 **Returns**: `Array<int>` 
 
-**Examples**:   
+**Examples**: \
 `float_arr_to_int_arr_([1.0, 2.0])` returns `[1, 2]`
 
 ---
@@ -1247,13 +1247,13 @@ Convert array of floats to array of integers. Useful for correcting parsed JSONs
 ### func <span id="get_fields_--GoldenGadget"></span>`get_fields_`(`obj`, `field_names`: `Array`) -> `Array`
 Get field values from given object/dictionary as an array (indices of output array matches those of input array)  
 
-**Parameters**:   
-`obj`: `Object | Dictionary` Input value  
+**Parameters**: \
+`obj`: `Object | Dictionary` Input value\
 `field_names`: `Array<String>` Names of fields to read values from
 
 **Returns**: `Array<any>` Read values of given fields
 
-**Examples**:   
+**Examples**: \
 `get_fields_({x = 2, y = true}, ["x", "y"])` returns `[2, true]`
 
 ---
@@ -1261,14 +1261,14 @@ Get field values from given object/dictionary as an array (indices of output arr
 ### func <span id="set_fields_--GoldenGadget"></span>`set_fields_`(`obj`, `values`: `Array`, `field_names`: `Array`) -> `void`
 Set field values of object/dictionary according to arrays of values and field names (indices of arrays match).  
 
-**Parameters**:   
-`obj`: `Object | Dictionary` Target for setting values on  
-`values`: `Array<any>` List of values  
+**Parameters**: \
+`obj`: `Object | Dictionary` Target for setting values on\
+`values`: `Array<any>` List of values\
 `field_names`: `Array<string>` List of corresponding field names
 
 **Returns**: `void` 
 
-**Examples**:   
+**Examples**: \
 `var dict = {x = 2, y = true}; GG.set_fields_(dict, [69, false], ["x", "y"])` results in `dict` to be equal to `{x = 69, y = false}`
 
 ---
@@ -1276,18 +1276,18 @@ Set field values of object/dictionary according to arrays of values and field na
 ### func <span id="bool_--GoldenGadget"></span>`bool_`(`cond`: `bool`, `on_false`, `on_true`)
 Return `on_false`/`on_true` depending on value of `cond`  
 
-**Type parameters**:   
+**Type parameters**: \
 `T`: `any` Return type
 
-**Parameters**:   
-`cond`: `bool` Condition  
-`on_false`: `T` Value to return when `cond` is `false`  
+**Parameters**: \
+`cond`: `bool` Condition\
+`on_false`: `T` Value to return when `cond` is `false`\
 `on_true`: `T` Value to return when `cond` is `true`
 
 **Returns**: `T` 
 
-**Examples**:   
-`bool_(true, 0, 1)` returns `1`  
+**Examples**: \
+`bool_(true, 0, 1)` returns `1`\
 `bool_(x == 0, "not zero", "is zero")` returns `"is zero"` when `x` is `0`, otherwise returns `"not zero"`
 
 ---
@@ -1296,12 +1296,12 @@ Return `on_false`/`on_true` depending on value of `cond`
 Same as [bool_](#bool_--GoldenGadget), but `on_false`/`on_true` are functions.  
 Only selected function will be called and its return value will be returned from `bool_lazy`.  
 
-**Type parameters**:   
+**Type parameters**: \
 `T`: `any` Return type
 
-**Parameters**:   
-`cond`: `bool` Condition  
-`on_false`: `FuncLike<T>` Function to call and return its result when `cond` is `false`  
+**Parameters**: \
+`cond`: `bool` Condition\
+`on_false`: `FuncLike<T>` Function to call and return its result when `cond` is `false`\
 `on_true`: `FuncLike<T>` Function to call and return its result when `cond` is `true`
 
 **Returns**: `T` 
@@ -1311,8 +1311,8 @@ Only selected function will be called and its return value will be returned from
 ### func <span id="pause_one_--GoldenGadget"></span>`pause_one_`(`node`: `Node`, `value`: `bool`) -> `void`
 Pause specific node. Disables all processing by a given node.  
 
-**Parameters**:   
-`node`: `Node` Branch to pause.  
+**Parameters**: \
+`node`: `Node` Branch to pause.\
 `value`: `bool` True means pause, false means resume (unpause)
 
 ---
@@ -1320,8 +1320,8 @@ Pause specific node. Disables all processing by a given node.
 ### func <span id="pause_--GoldenGadget"></span>`pause_`(`node`: `Node`, `value`: `bool`) -> `void`
 Pause a branch starting with given node (recursive variant of [pause_one_](#pause_one_--GoldenGadget)).  
 
-**Parameters**:   
-`node`: `Node` Branch to pause.  
+**Parameters**: \
+`node`: `Node` Branch to pause.\
 `value`: `bool` True means pause, false means resume (unpause)
 
 ---
@@ -1374,4 +1374,4 @@ Is given array empty?
 
 ---
 
-Generated by [GodoDoc](https://gitlab.com/monnef/gododoc)
+Generated by [GodoDoc](https://gitlab.com/monnef/gododoc) at 13. 6. 2020 10:05.

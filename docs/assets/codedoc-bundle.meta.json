@@ -68,11 +68,6 @@
   ],
   "components": [
     {
-      "name": "ToCPrevNext",
-      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/prevnext/index.js",
-      "hash": "z2F3XqEzdQUl9R5iISGZtg=="
-    },
-    {
       "name": "ToCToggle",
       "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/toggle/index.js",
       "hash": "4XMC1NeTEykJLzeFI8DSLw=="
@@ -86,6 +81,11 @@
       "name": "ConfigTransport",
       "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/transport/config.js",
       "hash": "B4Kk3spEGG1aHAK8LunwuQ=="
+    },
+    {
+      "name": "ToCPrevNext",
+      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/prevnext/index.js",
+      "hash": "z2F3XqEzdQUl9R5iISGZtg=="
     }
   ],
   "renderer": {

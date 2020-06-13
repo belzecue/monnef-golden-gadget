@@ -12,16 +12,16 @@ import { loadDeferredIFrames } from '/mnt/dev/godot/golden_gadget/.codedoc/node_
 import { smoothLoading } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/transport/smooth-loading.js';smoothLoading();
 import { tocHighlight } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/toc-highlight.js';tocHighlight();
 import { postNavSearch } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/search/post-nav/index.js';postNavSearch();
-import { ToCPrevNext } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/prevnext/index.js';
 import { ToCToggle } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/toggle/index.js';
 import { DarkModeSwitch } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/darkmode/index.js';
 import { ConfigTransport } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/transport/config.js';
+import { ToCPrevNext } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/prevnext/index.js';
 
 const components = {
-  'z2F3XqEzdQUl9R5iISGZtg==': ToCPrevNext,
   '4XMC1NeTEykJLzeFI8DSLw==': ToCToggle,
   'DsgX5+z3QZJ9FJUH2iwk8w==': DarkModeSwitch,
-  'B4Kk3spEGG1aHAK8LunwuQ==': ConfigTransport
+  'B4Kk3spEGG1aHAK8LunwuQ==': ConfigTransport,
+  'z2F3XqEzdQUl9R5iISGZtg==': ToCPrevNext
 };
 
 const renderer = getRenderer();

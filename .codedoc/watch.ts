@@ -2,12 +2,14 @@ import { exec, spawn } from 'child_process';
 import { config } from './config';
 
 
-const cmd = 'ts-node-dev';
-const params = `--project .codedoc/tsconfig.json`
-            + ` -T --watch ${config.src.base}`
-            + ` --ignore-watch .codedoc/node_modules`
-            + ` .codedoc/serve`;
+// const cmd = 'ts-node-dev';
+// const params = `--project .codedoc/tsconfig.json`
+//             + ` -T --watch ${config.src.base}`
+//             + ` --ignore-watch .codedoc/node_modules`
+//             + ` .codedoc/serve`;
 
+const cmd = 'find';
+const params = `${config.src.base} | entr -r npx --no-install ts-node -P .codedoc/tsconfig.json .codedoc/serve`;
 
 if (process.platform === 'win32') {
   const child = exec(cmd + ' ' + params);

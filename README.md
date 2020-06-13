@@ -4,7 +4,7 @@
 🧰 Golden Gadget 🌟
 ===================
 
-GDScript utility library focused on functional programming (FP)
+Golden Gadget is a GDScript library focused on small utility functions and allowing basic functional programming (FP).
 
 Status: ⚗️ **beta** (main functionality is implemented, API changes should be minimal)
 

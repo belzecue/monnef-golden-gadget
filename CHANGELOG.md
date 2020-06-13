@@ -1,6 +1,26 @@
 🌱 Change log
 =============
 
+🔸 0.3.0 🔸
+===========
+
+* Changed `head` and `last` to crash on empty arrays.
+* Implemented `find`, `find_or_null`, `head_or_null` and `last_or_null`.
+* Added `rand_dir2`, `rand_dir3`, `rand_sign`, `rand_bool`, `dir_to2`, `dir_to3` and `clampi`.
+* Fixed `new_array` to clone (duplicate) given value.
+* Implemented `is_empty` in GG (main file).
+* Implemented `group_with`, `transpose`, `nub` and `unique`.
+* Renamed `flatten` to `flatten_raw` and `flatten_unwrapped` to `flatten` in GGA.
+* Implemented `wrap` and `unwrap` in GGA.
+* Updated docs for newer version of Gododoc.
+* Implemented `take_while`.
+* Implemented `snake_to_camel_case` and `decapitalize_first`.
+* Implemented `capitalize_all`, `camel_to_snake_case`.
+* Implemented `floats_are_equal`, `format_float_2`, `format_vec2_2` and `format_vec3_2`.
+* Implemented `float_arr_to_int_arr`, `find_index_or_null` and `find_index`.
+* Tests now exit with an error code on failure.
+* Added error code parameter to `quit` function.
+
 🔸 0.2.0 🔸
 ===========
 
