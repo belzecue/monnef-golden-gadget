@@ -149,3 +149,5 @@ Various utility functions, few examples:
 * `delete_children`: delete all children of given `Node`
 * `get_node_or_crash`: safer option to `get_node` (which returns current `Node` on empty `NodePath`, thus frequently leading to bugs and strange behaviour)
 * `create_timer_and_start`: creates and starts a `Timer` node, connects your timeout handler (method of object). Also supports repeating mode. Useful when `yield(get_tree().create_timer(1), "timeout")` is leading to `Resumed after yield, but class instance is gone` errors.
+
+> :ToCPrevNext

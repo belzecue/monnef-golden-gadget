@@ -16,3 +16,5 @@ It is very likely that the library will be compatible across same main Godot ver
 ## Performance
 
 While I tried to optimize most functions, using this library will probably lead to worse performance compared to native solutions (e.g. using `for`s, mutable variables). It is a price for nice abstractions. But looking at the future - when JIT/AOT arrives, differences in performance might not be significant. Generally, I would not recommend building too many wrappers (`arr`, `G`) in `_process` and `_physics_process` especially if you are targeting mobile platforms. (You can use most functions directly from `GG` without an array wrapper.)
+
+> :ToCPrevNext
