@@ -9,7 +9,7 @@
 # Golden Gadget
 # GDScript utility library focused on functional programming (FP)
 #
-# version: 0.3.0 (2019-2020)
+# version: 0.4.0 (2019-2020)
 # author:  monnef
 # license: MIT
 # repo:    https://gitlab.com/monnef/golden-gadget
@@ -24,7 +24,6 @@
 #
 # recommended "imports":
 #   func G(arr) -> GGArray: return GG.arr(arr)
-#   func F(f): return GG.F_(f)
 #
 # All examples presume "imports" above are present and autoloading is configured.
 # Nice examples are located in GGTests script at the end.
@@ -60,6 +59,10 @@ func with_ctx2(f: FuncRef, ctx) -> CtxFRef2: return CtxFRef2.new(f, ctx)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+const MAX_INT = 9223372036854775807
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 # utility functions
 
 ## Terminate/halt/quit program.
@@ -67,9 +70,27 @@ func with_ctx2(f: FuncRef, ctx) -> CtxFRef2: return CtxFRef2.new(f, ctx)
 func quit_(error_code: int = 0) -> void: GGI.quit_(error_code)
 var quit = funcref(self, "quit_")
 
+func parse_cmd_args_(args: Array) -> Dictionary:
+	var res:= {}
+	for arg in args:
+		if arg.find("=") > -1:
+			var kv = arg.split("=")
+			res[kv[0].lstrip("--")] = kv[1]
+		elif arg.begins_with("--"):
+			res[arg.lstrip("--")] = true
+	return res
+var parse_cmd_args = funcref(self, "parse_cmd_args_")
+
+func get_cmd_args_() -> Dictionary: return parse_cmd_args_(OS.get_cmdline_args())
+var get_cmd_args = funcref(self, "get_cmd_args_")
+
 ## Assert condition is `true`, terminate program with error message otherwise.
 func assert_(cond: bool, msg: String) -> void: GGI.assert_(cond, msg)
 var assert__ = funcref(self, "assert_")
+
+## Assert two values are equal (using [[eqd]]).
+func assert_eq_(actual, expected, note: String = "") -> void: GGI.assert_eq_(actual, expected, note)
+var assert_eq = funcref(self, "assert_eq_")
 
 ## Terminate program with error message.
 func crash_(msg: String) -> void: GGI.crash_(msg)
@@ -228,7 +249,7 @@ var negate = funcref(self, "negate_")
 ## @param field_name {String}
 ## @return {any}
 ## Crashes on a missing field.
-func get_fld_(obj, field_name: String): return GGI.get_fld_(obj, field_name)
+func get_fld_(obj, field_name): return GGI.get_fld_(obj, field_name)
 var get_fld = funcref(self, "get_fld_")
 
 ## Get a value in a given field. If the field is missing, return a given default value.
@@ -236,7 +257,7 @@ var get_fld = funcref(self, "get_fld_")
 ## @param field_name {String}
 ## @param default {any}
 ## @return {any}
-func get_fld_or_else_(obj, field_name: String, default): return GGI.get_fld_or_else_(obj, field_name, default)
+func get_fld_or_else_(obj, field_name, default): return GGI.get_fld_or_else_(obj, field_name, default)
 var  get_fld_or_else = funcref(self, "get_fld_or_else_")
 
 ## Get a value in a given field. If the field is missing, return `null`.
@@ -244,7 +265,7 @@ var  get_fld_or_else = funcref(self, "get_fld_or_else_")
 ## @param field_name {String}
 ## @param default {any}
 ## @return {any}
-func get_fld_or_null_(obj, field_name: String): return GGI.get_fld_or_null_(obj, field_name)
+func get_fld_or_null_(obj, field_name): return GGI.get_fld_or_null_(obj, field_name)
 var  get_fld_or_null = funcref(self, "get_fld_or_null_")
 
 ## Get a first item in a pair.
@@ -340,7 +361,56 @@ func format_datetime_(date = null) -> String:
 	return "%s-%02d-%02d--%02d-%02d-%02d" % [date.year, date.month, date.day, date.hour, date.minute, date.second]
 var format_datetime = funcref(self, "format_datetime_")
 
-## Test if two `float` values are same (withing maring of `eps`).
+enum TimeFormat {
+	HOURS   = 1 << 0,
+	MINUTES = 1 << 1,
+	SECONDS = 1 << 2,
+	MILISECONDS = 1 << 3,
+	MINSEC = 1 << 1 | 1 << 2,
+	MINSECMILI = 1 << 1 | 1 << 2 | 1 << 3,
+	DEFAULT = 7
+}
+
+## Format time.
+## @param time {float} Time in seconds
+## @param options {Dictionary}
+## Options:
+## * `format`           - default `TimeFormat.DEFAULT` (hours + minutes + seconds)
+## * `delim`            - delimiter, default `":"`
+## * `digit_format`     - default `"%02d"`
+## * `hours_format`     - default is `digit_format`
+## * `minutes_format`   - default is `digit_format`
+## * `seconds_format`   - default is `digit_format` (or `"%05.2f"` when TimeFormat.MILISECONDS is in `format`)
+## @example `GG.format_time_(0)` returns `"00:00:00"`
+## @example `GG.format_time_(45296)` returns `"12:34:56"`
+## @example `GG.format_time_(81, {format = GG.TimeFormat.MINSEC})` returns `"01:21"`
+## @example `GG.format_time_(62.1, {format = GG.TimeFormat.MINSECMILI})` returns `"01:02.10"`
+## @example `GG.format_time_(81, {format = GG.TimeFormat.MINUTES | GG.TimeFormat.SECONDS})` returns `"01:21"`
+## @example `GG.format_time_(62, {digit_format = "%d"})` returns `"0:1:2"`
+## @example `GG.format_time_(0, {delim = "•"})` returns `"00•00•00"`
+## @example `GG.format_time_(45296.7, {hours_format = "H = %d", minutes_format = "M = %d", seconds_format = "S = %.1f", delim = " | "})` returns `"H = 12 | M = 34 | S = 56.7"`
+func format_time_(time: float, options: Dictionary = {}) -> String:
+	var digit_format = get_fld_or_else_(options, "digit_format", "%02d")
+	var format = get_fld_or_else_(options, "format", TimeFormat.DEFAULT)
+	var default_milisecs_format = "%05.2f"
+	var seconds_format = get_fld_or_else_(options, "seconds_format", default_milisecs_format if format & TimeFormat.MILISECONDS else digit_format)
+	var minutes_format = get_fld_or_else_(options, "minutes_format", digit_format)
+	var hours_format = get_fld_or_else_(options, "hours_format", digit_format)
+	var delim = get_fld_or_else_(options, "delim", ":")
+
+	var hours = (hours_format % [time / 3600]) if format & TimeFormat.HOURS else null
+	var minutes = (minutes_format % [fmod(time, 3600) / 60]) if format & TimeFormat.MINUTES else null
+	var seconds = (seconds_format % [fmod(time, 60)]) if format & TimeFormat.SECONDS else null
+	var miliseconds = (seconds_format % [fmod(time, 1)]).lstrip("0 ") if format & TimeFormat.MILISECONDS && !format & TimeFormat.SECONDS else null
+
+	# hack around Godot's broken float zero padding (inserts spaces instead of zeroes) - https://github.com/godotengine/godot/issues/39237
+	if seconds_format == default_milisecs_format && seconds != null:
+		seconds = (seconds as String).replace(" ", "0")
+
+	return arr([hours, minutes, seconds, miliseconds]).compact().join(delim)
+var format_time = funcref(self, "format_time_")
+
+## Test if two `float` values are same (within margin of `eps`).
 ## @param x {float} first value
 ## @param y {float} second value
 ## @param eps {float} accepted margin
@@ -442,13 +512,13 @@ func get_node_or_crash_(parent, path) -> Node:
 var get_node_or_crash = funcref(self, "get_node_or_crash_")
 
 ## Get a child node. If there is any problem, return `null`.
-## @param parent {Node | null}    Of which node we want to retrieve a child
-## @param path {NodePath | null}  Path to a child
-## @return {Node | null}          Child node or `null` on failure
+## @param parent {Node | null}             Of which node we want to retrieve a child
+## @param path {NodePath | String | null}  Path to a child
+## @return {Node | null}                   Child node or `null` on failure
 func get_node_or_null_(parent, path):
-	if path == null || path.is_empty(): return null
+	if path == null || (path is NodePath && path.is_empty()): return null
 	if parent == null: return null
-	return parent.get_node(path)
+	return parent.get_node_or_null(path)
 var get_node_or_null = funcref(self, "get_node_or_null_")
 
 ## Create a `Timer` node, connect timeout signal to the method and start.
@@ -661,6 +731,18 @@ var rand_sign = funcref(self, "rand_sign_")
 func rand_bool_(): return randf() > .5
 var rand_bool = funcref(self, "rand_bool_")
 
+## Get random `float` from range [`from`, `to`].
+## @example `rand_float_(1, 2)` may return `1.7324`
+func rand_float_(from: float, to: float) -> float:
+	return from + randf() * (to - from)
+var rand_float = funcref(self, "rand_float_")
+
+## Get random `int` from range [`from`, `to`] (including both endpoints).
+## @example `rand_int_(1, 5)` may return `5`
+func rand_int_(from: int, to: int) -> int:
+	return from + randi() % (to - from + 1)
+var rand_int = funcref(self, "rand_int_")
+
 ## Get direction between two `Node2D`s.
 func dir_to2_(from: Node2D, to: Node2D) -> Vector2: return (to.global_position - from.global_position).normalized()
 var dir_to2 = funcref(self, "dir_to2_")
@@ -684,8 +766,62 @@ var absi = funcref(self, "absi_")
 func is_empty_(arr: Array) -> bool: return GGI.is_empty_(arr)
 var is_empty = funcref(self, "is_empty_")
 
+func byte_array_to_texture_(arr: Array, flags:= 0) -> Texture:
+	var b_arr = PoolByteArray(arr)
+	var img = Image.new()
+	img.create_from_data(arr.size(), 1, false, Image.FORMAT_R8, b_arr)
+	var tex = ImageTexture.new()
+	tex.create_from_image(img, flags)
+	return tex
+var byte_array_to_texture = funcref(self, "byte_array_to_texture_")
+
+## Read JSON from file. Crash on error.
+## @param path {String} Path to JSON file
+## @return {Dictionary} Parsed JSON
+func read_json_file_or_crash_(path: String, error_tag:= ""):
+	var res = read_json_file_or_error_(path)
+	if res.error == OK:
+		return res.result
+	else:
+		crash_(("" if error_tag.empty() else ("[" + error_tag + "]")) + res.message)
+var read_json_file_or_crash = funcref(self, "read_json_file_or_crash_")
+
+## Read JSON from file.
+## @param path {String} Path to JSON file
+## @return {Dictionary | null} Parsed JSON
+func read_json_file_or_null_(path: String):
+	var res = read_json_file_or_error_(path)
+	return res.result
+var read_json_file_or_null = funcref(self, "read_json_file_or_null_")
+
+## Read JSON from file. Return object describing result.
+## Returns dictionary with following fields:
+## * `result`             - parsed JSON from file (a `Dictionary`), or `null` on error. Example: `{field = "value"}`
+## * `message`            - error message. Example: `"TODO"`
+## * `error`              - error number from `file.open` or `JSON.parse`
+## * `error_line`         - error line from `JSON.parse` error
+## * `error_string`       - error string from `JSON.parse` error
+## @param path {String} Path to JSON file
+## @return {Dictionary}
+func read_json_file_or_error_(path: String) -> Dictionary:
+	var file = File.new()
+	var open_res = file.open(path, File.READ)
+	if open_res != OK:
+		return {message = "failed to open JSON file \"%s\": %s" % [path, open_res], error = open_res, result = null}
+	var res = JSON.parse(file.get_as_text())
+	if res.error != OK:
+		return {
+			message = "failed to parse JSON file - %s: %s" % [res.error_line, res.error_string],
+			error = res.error,
+			error_line = res.error_line,
+			error_string = res.error_string,
+			result = null
+		}
+	file.close()
+	return {result = res.result, error = OK}
+var read_json_file_or_error = funcref(self, "read_json_file_or_error_")
+
 # TODO:
-# rand_float, rand_int (interval)
 # has/elem (in hs: Eq a => a -> [a] -> Bool)
 # notElem?
 # randc / randca - random color (alpha = 1, alpha = random)?
@@ -764,6 +900,9 @@ var find_index_or_null = funcref(self, "find_index_or_null_")
 func find_index_(arr: Array, predicate, ctx = GGI._EMPTY_CONTEXT): return GGI.find_index_(arr, predicate, ctx)
 var find_index = funcref(self, "find_index_")
 
+func partition_(arr: Array, predicate, ctx = GGI._EMPTY_CONTEXT) -> Array: return GGI.partition_(arr, predicate, ctx)
+var partition = funcref(self, "partition_")
+
 func foldl_(arr: Array, f, zero, ctx = GGI._EMPTY_CONTEXT): return GGI.foldl_(arr, f, zero, ctx)
 var foldl = funcref(self, "foldl_")
 
@@ -793,6 +932,15 @@ var drop_right = funcref(self, "drop_right_")
 # reverse (invert) array
 func reverse_(xs: Array) -> Array: return GGI.reverse_(xs)
 var reverse = funcref(self, "reverse_")
+
+func max_(xs: Array): return GGI.max_(xs)
+var max__ = funcref(self, "max_")
+
+func min_(xs: Array): return GGI.min_(xs)
+var min__ = funcref(self, "min_")
+
+func average_(xs: Array): return GGI.average_(xs)
+var average = funcref(self, "average_")
 
 func sum_(xs: Array) -> int: return GGI.sum_(xs)
 var sum = funcref(self, "sum_")

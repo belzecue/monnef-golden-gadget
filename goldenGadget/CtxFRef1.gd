@@ -1,6 +1,6 @@
 # Reference of a function which takes two arguments - current item or data, and context
 # poor-languge's emulation of partial application
-
+tool
 extends Resource
 
 class_name CtxFRef1

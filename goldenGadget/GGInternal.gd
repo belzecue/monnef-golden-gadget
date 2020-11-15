@@ -1,3 +1,4 @@
+tool
 extends Resource
 
 class_name GGInternal
@@ -6,8 +7,11 @@ const _EMPTY_CONTEXT = "This is a workaround GDScript's limitations:" +\
   " instances of user classes cannot be assigned to const (nor anything like 'Symbol' from JS exists)"
 
 func quit_(error_code: int = 0) -> void:
-	var ml = Engine.get_main_loop()
 	OS.set_exit_code(error_code)
+	# use assert to enter debug mode when running game in editor
+	if error_code != 0 && !OS.has_feature("standalone"):
+		assert(false)
+	var ml = Engine.get_main_loop()
 	if !ml || !ml.has_method("quit"):
 		print("Failed to get main loop (or it doesn't support quit method). Cannot use ordinary means of termination.")
 		assert(false)
@@ -19,6 +23,11 @@ func crash_(msg: String) -> void:
 	quit_(1)
 
 func assert_(cond: bool, msg: String) -> void: if !cond: crash_(msg)
+
+func assert_eq_(actual, expected, note: String = "") -> void:
+	if !eqd_(actual, expected):
+		var note_str = ("%s >> " % [note]) if note != "" else ""
+		GG.assert_(false, "%sExpected: %s, Actual: %s" % [note_str, expected, actual])
 
 func head_(arr: Array):
 	if is_empty_(arr): crash_("Cannot get a first element (head) of an empty array.")
@@ -89,9 +98,9 @@ func foldl_fn_(arr: Array, f: FuncRef, zero, ctx = _EMPTY_CONTEXT):
 
 func foldl_(arr: Array, f, zero, ctx = _EMPTY_CONTEXT): return foldl_fn_(arr, f_like_to_func(f), zero, ctx)
 
-func get_fld_(obj, field_name: String): return obj[field_name]
+func get_fld_(obj, field_name): return obj[field_name]
 
-func get_fld_or_else_(obj, field_name: String, default):
+func get_fld_or_else_(obj, field_name, default):
 	if obj == null || field_name == null: return default
 	if obj is Dictionary:
 		if !obj.has(field_name): return default
@@ -99,7 +108,7 @@ func get_fld_or_else_(obj, field_name: String, default):
 		if !field_name in obj: return default
 	return obj[field_name]
 
-func get_fld_or_null_(obj, field_name: String): return get_fld_or_else_(obj, field_name, null)
+func get_fld_or_null_(obj, field_name): return get_fld_or_else_(obj, field_name, null)
 
 func size_(x):
 	if x is Array: return x.size()
@@ -270,6 +279,26 @@ func tap_(x, f):
 	f_like_to_func(f).call_func(x)
 	return x
 
+func max_(xs: Array):
+	if is_empty_(xs): return null
+	var mx = xs[0]
+	for i in range(xs.size()):
+		var c = xs[i]
+		if c > mx: mx = c
+	return mx
+
+func min_(xs: Array):
+	if is_empty_(xs): return null
+	var mi = xs[0]
+	for i in range(xs.size()):
+		var c = xs[i]
+		if c < mi: mi = c
+	return mi
+
+func average_(xs: Array):
+	if is_empty_(xs): return null
+	return float(sum_(xs)) / xs.size();
+
 func sum_(xs: Array) -> int:
 	var r:= 0
 	for x in xs: r += x
@@ -419,3 +448,10 @@ func uniq_(xs: Array) -> Array:
 	return res
 
 func float_arr_to_int_arr_(xs: Array) -> Array: return map_(xs, "x => int(x)")
+
+func partition_(xs: Array, pred, ctx = _EMPTY_CONTEXT) -> Array:
+	var p = []; var n = []
+	var pred_func = f_like_to_func(pred)
+	for x in xs:
+		(p if call_f1_w_ctx(pred_func, x, ctx) else n).push_back(x)
+	return [p, n]

@@ -11,11 +11,13 @@ const f = false
 
 func run() -> void:
 	var start = OS.get_ticks_msec()
+	randomize()
 	_test_wrap()
 	_test_map()
 	_test_for_each()
 	_test_join()
 	_test_filter()
+	_test_partition()
 	_test_fold()
 	_test_arr_pipe()
 	_test_utils()
@@ -37,6 +39,8 @@ func run() -> void:
 	_test_flatten()
 	_test_func_compostition_utils()
 	_test_tap()
+	_test_min_max()
+	_test_average()
 	_test_sum_product()
 	_test_insertion_concatenation()
 	_test_array_generators()
@@ -45,6 +49,8 @@ func run() -> void:
 	_test_uniq()
 	_test_transpose()
 	_test_format()
+	_test_cmd_args()
+	_test_json_reading()
 	var stop = OS.get_ticks_msec()
 	print("[GG] Golden Gadget Tests: SUCCESS in %.3fs (%s - %s)" % [(stop - start)/1000.0, start, stop])
 
@@ -258,6 +264,12 @@ func _test_filter() -> void:
 	_assert(G([T0.new(-1, true), T0.new(0, false), T0.new(1, false)]).find_by_fld_val("b", false).get_x(), 0)
 	_assert(G([{id = 0, name = "Zero"}, {id = 1, name = "One"}]).find_by_fld_val("id", 1).name, "One")
 
+	# find_by_fld_val
+	_assert(G([T0.new(-1, true), T0.new(0, false), T0.new(1, false)]).find_by_fld_val_or_null("b", false).get_x(), 0)
+	_assert(G([{id = 0, name = "Zero"}, {id = 1, name = "One"}]).find_by_fld_val_or_null("id", 1).name, "One")
+	_assert(G([T0.new(-1, true), T0.new(0, false), T0.new(1, false)]).find_by_fld_val_or_null("id", 0), null)
+	_assert(G([{id = 0, name = "Zero"}, {id = 1, name = "One"}]).find_by_fld_val_or_null("id", -1), null)
+
 	# find_or_null
 	var find_or_null_cases = [
 		[[], "x => x == 1", null],
@@ -283,6 +295,24 @@ func _test_filter() -> void:
 	_test_func_a(find_index_or_null_cases, GG.find_index_or_null)
 	_test_func_a(find_index_or_null_cases, funcref(GG, "find_index_or_null_"))
 	_test_arr_func_a(find_index_or_null_cases, "find_index_or_null")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_partition() -> void:
+	var partition_cases = [
+		[[], "x => true", [[], []]],
+		[[-1, 0, 1], "x => x>= 0", [[0, 1], [-1]]]
+	]
+	_test_func_a(partition_cases, GG.partition)
+	_test_func_a(partition_cases, funcref(GG, "partition_"))
+	var res = G([-1, 0, 1]).partition("x => x >= 0")
+	_assert(res.to_array_deep(), [[0, 1], [-1]])
+	_assert(GGArray.is_GGArray(res.val[0]),true)
+	# with ctx
+	_assert(GG.partition_([0, 1, 2], "x, ctx => x >= ctx", 1), [[1, 2], [0]])
+	_assert(G([0, 1, 2]).partition("x, ctx => x >= ctx", 1).to_array_deep(), [[1, 2], [0]])
+
+# ----------------------------------------------------------------------------------------------------------------------
 
 func _is_2(x) -> bool: return x == 2
 func _gte_2(x) -> bool: return x >= 2
@@ -905,6 +935,40 @@ func _test_rand() -> void:
 		var r = GG.rand_bool_()
 		_assert([true, false].has(r), true)
 
+	# rand_float
+	var rand_float_min = false
+	var rand_float_max = false
+	var rand_float_iterations = 0
+	for i in range(10000):
+		rand_float_iterations = i
+		var x = GG.rand_float_(5, 10)
+		GG.assert_(x <= 10, "x <= 10")
+		GG.assert_(x >= 5, "x >= 5")
+		if x <= 5.01: rand_float_min = true
+		if x >= 9.99: rand_float_max = true
+		if rand_float_min && rand_float_max && i > 100: break
+	# print(rand_float_iterations)
+	GG.assert_(rand_float_min, "rand_float min")
+	GG.assert_(rand_float_max, "rand_float max")
+	_assert(GG.rand_float_(-10, -5) <= -5, true)
+
+	# rand_int
+	var rand_int_min = false
+	var rand_int_max = false
+	var rand_int_iterations = 0
+	for i in range(100):
+		rand_int_iterations = i
+		var x = GG.rand_int_(5, 10)
+		GG.assert_(x <= 10, "x <= 10")
+		GG.assert_(x >= 5, "x >= 5")
+		if x == 5: rand_int_min = true
+		if x == 10: rand_int_max = true
+		if rand_int_min && rand_int_max && i > 10: break
+	# print(rand_int_iterations)
+	GG.assert_(rand_int_min, "rand_int min")
+	GG.assert_(rand_int_max, "rand_int max")
+	_assert(GG.rand_int_(-10, -5) <= -5, true)
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 func _test_object() -> void:
@@ -1104,6 +1168,41 @@ func _test_tap() -> void:
 	_assert(tap_test, 0)
 	_assert(G([1]).tap(funcref(self, "_set_tap_test")).map("x => x + 1").val, [2])
 	_assert(tap_test, [1])
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_min_max() -> void:
+	var min_cases = \
+	[ [[], null]
+	, [[1], 1]
+	, [[1, 0, 2], 0]
+	]
+	_test_func_a(min_cases, GG.min__)
+	_test_func_a(min_cases, funcref(GG, "min_"))
+	_test_arr_func_a(min_cases, "min")
+
+	var max_cases = \
+	[ [[], null]
+	, [[1], 1]
+	, [[1, 0, 2], 2]
+	]
+	_test_func_a(max_cases, GG.max__)
+	_test_func_a(max_cases, funcref(GG, "max_"))
+	_test_arr_func_a(max_cases, "max")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_average() -> void:
+	var average_cases = \
+	[ [[], null]
+	, [[1], 1]
+	, [[1, 0, 2], 1]
+	, [[4.0, 6.0, 5.0], 5.0]
+	, [[0.0, 1.0], 0.5]
+	]
+	_test_func_a(average_cases, GG.average)
+	_test_func_a(average_cases, funcref(GG, "average_"))
+	_test_arr_func_a(average_cases, "average")
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1360,6 +1459,58 @@ func _test_format() -> void:
 	]
 	_test_func_a(format_vec3_2_cases, GG.format_vec3_2)
 	_test_func_a(format_vec3_2_cases, funcref(GG, "format_vec3_2_"))
+
+	var format_time_cases = \
+	[ [0, "00:00:00"]
+	, [60, "00:01:00"]
+	, [60*60, "01:00:00"]
+	, [81, {format = GG.TimeFormat.MINUTES | GG.TimeFormat.SECONDS}, "01:21"]
+	, [81, {format = GG.TimeFormat.MINSEC}, "01:21"]
+	, [62, {digit_format = "%d"}, "0:1:2"]
+	, [0, {delim = "•"}, "00•00•00"]
+	, [45296, "12:34:56"]
+	, [0.1, "00:00:00"]
+	, [62.1, {format = GG.TimeFormat.MINSECMILI}, "01:02.10"]
+	, [0.2, {format = GG.TimeFormat.MILISECONDS}, ".20"]
+	, [0.3, {seconds_format = "Q%.1fQ"}, "00:00:Q0.3Q"]
+	, [45296.7, {hours_format = "H = %d", minutes_format = "M = %d", seconds_format = "S = %.1f", delim = " | "}, "H = 12 | M = 34 | S = 56.7"]
+	]
+	_test_func_a(format_time_cases, GG.format_time)
+	_test_func_a(format_time_cases, funcref(GG, "format_time_"))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_cmd_args() -> void:
+	var parse_cmd_args_cases = \
+	[ [ [], {} ]
+	, [ ["scene.tscn"], {} ]
+	, [ ["scene.tscn", "--cheats=on"], {cheats = "on"} ]
+	, [ ["--debug=true", "--godmode=off"], {debug = "true", godmode = "off"} ]
+	, [ ["--debug", "--godmode"], {debug = true, godmode = true} ]
+	]
+	_test_func_a(parse_cmd_args_cases, GG.parse_cmd_args)
+	_test_func_a(parse_cmd_args_cases, funcref(GG, "parse_cmd_args_"))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_json_reading() -> void:
+	var res1 = GG.read_json_file_or_error_("res://goldenGadget/test_json_1.json")
+	_assert(res1, { result = {field = "value"}, error = OK })
+	var res2 = GG.read_json_file_or_error_("not_existing_file.json")
+	_assert(res2, { result = null, error = ERR_FILE_NOT_FOUND, message = "failed to open JSON file \"not_existing_file.json\": 7" })
+	var res3 = GG.read_json_file_or_error_("res://goldenGadget/test_json_2.json")
+	_assert(res3, {
+		result = null,
+		error = ERR_PARSE_ERROR,
+		error_string = "Expected 'true','false' or 'null', got 'not'.",
+		error_line = 0,
+		message = "failed to parse JSON file - 0: Expected 'true','false' or 'null', got 'not'."
+	})
+	_assert(GG.read_json_file_or_error.call_func("res://goldenGadget/test_json_1.json"), { result = {field = "value"}, error = OK })
+
+	_assert(GG.read_json_file_or_null_("res://goldenGadget/test_json_1.json"), {field = "value"})
+	_assert(GG.read_json_file_or_null_("res://goldenGadget/test_json_2.json"), null)
+	_assert(GG.read_json_file_or_null_("not_existing_file.json"), null)
 
 # ----------------------------------------------------------------------------------------------------------------------
 

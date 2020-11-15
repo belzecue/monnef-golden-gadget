@@ -1,5 +1,20 @@
-🌱 Change log
-=============
+🌱 Change log 🌳
+===============
+
+🔸 0.4.0 🔸
+===========
+* Improved `quit` to enter debug mode when running from editor.
+* Implemented `get_cmd_args` and `parse_cmd_args`.
+* Implemented `format_time`.
+* Implemented `assert_eq`.
+* Implemented `rand_float` and `rand_int`.
+* Removed string restriction on field name in `get_fld` and relatives.
+* Implemented `average`, `min` and `max` functions.
+* Implemented `find_by_fld_val_or_null` in GGA.
+* Implemented `partition`, `is_GGArray` and `to_array_deep`.
+* Improved `get_node_or_null` to support string and not spam error log.
+* Implemented easy reading of JSON files (`read_json_file_or_error`, `read_json_file_or_null`, `read_json_file_or_crash`).
+* Removed `F` from recommended imports, bumped version.
 
 🔸 0.3.0 🔸
 ===========

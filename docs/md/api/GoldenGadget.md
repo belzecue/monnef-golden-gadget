@@ -34,6 +34,11 @@ Assert condition is `true`, terminate program with error message otherwise.
 
 ---
 
+### func <span id="assert_eq_--GoldenGadget"></span>`assert_eq_`(`actual`, `expected`, `note`: `String` = `""`) -> `void`
+Assert two values are equal (using [eqd](#eqd--GoldenGadget)).  
+
+---
+
 ### func <span id="crash_--GoldenGadget"></span>`crash_`(`msg`: `String`) -> `void`
 Terminate program with error message.  
 
@@ -213,7 +218,7 @@ Logic not.
 
 ---
 
-### func <span id="get_fld_--GoldenGadget"></span>`get_fld_`(`obj`, `field_name`: `String`)
+### func <span id="get_fld_--GoldenGadget"></span>`get_fld_`(`obj`, `field_name`)
 Get a value in a given field.  
 Crashes on a missing field.  
 
@@ -225,7 +230,7 @@ Crashes on a missing field.
 
 ---
 
-### func <span id="get_fld_or_else_--GoldenGadget"></span>`get_fld_or_else_`(`obj`, `field_name`: `String`, `default`)
+### func <span id="get_fld_or_else_--GoldenGadget"></span>`get_fld_or_else_`(`obj`, `field_name`, `default`)
 Get a value in a given field. If the field is missing, return a given default value.  
 
 **Parameters**: \
@@ -237,7 +242,7 @@ Get a value in a given field. If the field is missing, return a given default va
 
 ---
 
-### func <span id="get_fld_or_null_--GoldenGadget"></span>`get_fld_or_null_`(`obj`, `field_name`: `String`)
+### func <span id="get_fld_or_null_--GoldenGadget"></span>`get_fld_or_null_`(`obj`, `field_name`)
 Get a value in a given field. If the field is missing, return `null`.  
 
 **Parameters**: \
@@ -376,8 +381,34 @@ Possible output: `"2019-12-19--13-03-18"`
 
 ---
 
+### func <span id="format_time_--GoldenGadget"></span>`format_time_`(`time`: `float`, `options`: `Dictionary` = `<<TODO: ELit (LDictionary [])>>`) -> `String`
+Format time.  
+Options:  
+* `format`           - default `TimeFormat.DEFAULT` (hours + minutes + seconds)  
+* `delim`            - delimiter, default `":"`  
+* `digit_format`     - default `"%02d"`  
+* `hours_format`     - default is `digit_format`  
+* `minutes_format`   - default is `digit_format`  
+* `seconds_format`   - default is `digit_format` (or `"%05.2f"` when TimeFormat.MILISECONDS is in `format`)  
+
+**Parameters**: \
+`time`: `float` Time in seconds\
+`options`: `Dictionary` 
+
+**Examples**: \
+`GG.format_time_(0)` returns `"00:00:00"`\
+`GG.format_time_(45296)` returns `"12:34:56"`\
+`GG.format_time_(81, {format = GG.TimeFormat.MINSEC})` returns `"01:21"`\
+`GG.format_time_(62.1, {format = GG.TimeFormat.MINSECMILI})` returns `"01:02.10"`\
+`GG.format_time_(81, {format = GG.TimeFormat.MINUTES | GG.TimeFormat.SECONDS})` returns `"01:21"`\
+`GG.format_time_(62, {digit_format = "%d"})` returns `"0:1:2"`\
+`GG.format_time_(0, {delim = "•"})` returns `"00•00•00"`\
+`GG.format_time_(45296.7, {hours_format = "H = %d", minutes_format = "M = %d", seconds_format = "S = %.1f", delim = " | "})` returns `"H = 12 | M = 34 | S = 56.7"`
+
+---
+
 ### func <span id="floats_are_equal_--GoldenGadget"></span>`floats_are_equal_`(`x`: `float`, `y`: `float`, `eps` = `1.0e-4`) -> `bool`
-Test if two `float` values are same (withing maring of `eps`).  
+Test if two `float` values are same (within margin of `eps`).  
 
 **Parameters**: \
 `x`: `float` first value\
@@ -472,7 +503,7 @@ Get a child node. If there is any problem, return `null`.
 
 **Parameters**: \
 `parent`: `Node | null` Of which node we want to retrieve a child\
-`path`: `NodePath | null` Path to a child
+`path`: `NodePath | String | null` Path to a child
 
 **Returns**: `Node | null` Child node or `null` on failure
 
@@ -800,6 +831,22 @@ Get random `bool`.
 
 ---
 
+### func <span id="rand_float_--GoldenGadget"></span>`rand_float_`(`from`: `float`, `to`: `float`) -> `float`
+Get random `float` from range [`from`, `to`].  
+
+**Examples**: \
+`rand_float_(1, 2)` may return `1.7324`
+
+---
+
+### func <span id="rand_int_--GoldenGadget"></span>`rand_int_`(`from`: `int`, `to`: `int`) -> `int`
+Get random `int` from range [`from`, `to`] (including both endpoints).  
+
+**Examples**: \
+`rand_int_(1, 5)` may return `5`
+
+---
+
 ### func <span id="dir_to2_--GoldenGadget"></span>`dir_to2_`(`from`: `Node2D`, `to`: `Node2D`) -> `Vector2`
 Get direction between two `Node2D`s.  
 
@@ -823,9 +870,45 @@ Get absolute value of an integer (distance from zero).
 ### func <span id="is_empty_--GoldenGadget"></span>`is_empty_`(`arr`: `Array`) -> `bool`
 Is given array empty?  
 
+---
+
+### func <span id="read_json_file_or_crash_--GoldenGadget"></span>`read_json_file_or_crash_`(`path`: `String`, `error_tag` = `""`)
+Read JSON from file. Crash on error.  
+
+**Parameters**: \
+`path`: `String` Path to JSON file
+
+**Returns**: `Dictionary` Parsed JSON
+
+---
+
+### func <span id="read_json_file_or_null_--GoldenGadget"></span>`read_json_file_or_null_`(`path`: `String`)
+Read JSON from file.  
+
+**Parameters**: \
+`path`: `String` Path to JSON file
+
+**Returns**: `Dictionary | null` Parsed JSON
+
+---
+
+### func <span id="read_json_file_or_error_--GoldenGadget"></span>`read_json_file_or_error_`(`path`: `String`) -> `Dictionary`
+Read JSON from file. Return object describing result.  
+Returns dictionary with following fields:  
+* `result`             - parsed JSON from file (a `Dictionary`), or `null` on error. Example: `{field = "value"}`  
+* `message`            - error message. Example: `"TODO"`  
+* `error`              - error number from `file.open` or `JSON.parse`  
+* `error_line`         - error line from `JSON.parse` error  
+* `error_string`       - error string from `JSON.parse` error  
+
+**Parameters**: \
+`path`: `String` Path to JSON file
+
+**Returns**: `Dictionary` 
+
 
 <br>
 
 ---
 
-Generated by [GodoDoc](https://gitlab.com/monnef/gododoc) at 13. 6. 2020 17:45.
+Generated by [GodoDoc](https://gitlab.com/monnef/gododoc) at 15. 11. 2020  6:05.

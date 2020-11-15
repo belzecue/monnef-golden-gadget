@@ -14,6 +14,8 @@ class_name GGArray
 ## @internal
 var GGI = GGInternal.new()
 
+const GGArray_marker:= true
+
 ## Inner [[Array]]. Usually used to end [[GGArray]] chains.
 ## @type {Array<T>}
 ## @example `G([1, 2]).val` returns `[1, 2]`
@@ -177,6 +179,10 @@ func find(predicate, ctx = GGI._EMPTY_CONTEXT): return GGI.find_(_val, predicate
 func find_by_fld_val(field_name: String, field_value):
 	return filter_by_fld_val(field_name, field_value).head()
 
+## Find an item by a value of a field. Returns `null` on failure.
+func find_by_fld_val_or_null(field_name: String, field_value):
+	return filter_by_fld_val(field_name, field_value).head_or_null()
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 ## Find item in array for which precate holds and return its index.
@@ -190,6 +196,13 @@ func find_index_or_null(predicate, ctx = GGI._EMPTY_CONTEXT): return GGI.find_in
 ## @param ctx {any}
 ## @return {int}
 func find_index(predicate, ctx = GGI._EMPTY_CONTEXT): return GGI.find_index_(_val, predicate, ctx)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+## Split array into two - first one consists of elements satisfying given predicate, second array of those which don't.
+## @param predicate {Func<T, bool>}
+## @return {GGArray<GGArray<T>>}
+func partition(predicate, ctx = GGI._EMPTY_CONTEXT) -> GGArray: return _w_(GGI.partition_(_val, predicate, ctx)).map(_w)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -339,6 +352,18 @@ func tap(f) -> GGArray: # custom implementation to avoid rewrapping from using G
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+## Get maximal value.
+## @example `G([1, 2, 3]).max()` returns `3`
+func max(): return GGI.max_(_val)
+
+## Get minimal value.
+## @example `G([1, 2, 3]).min()` returns `1`
+func min(): return GGI.min_(_val)
+
+## Calculate average.
+## @example `G([0.0, 1.0]).average()` returns `0.5`
+func average(): return GGI.average_(_val)
+
 ## Sum all items in an array.
 ## @example `G([2, 3, 5]).sum()` returns `10`
 func sum() -> int: return GGI.sum_(_val)
@@ -400,6 +425,15 @@ func uniq() -> GGArray: return _w_(GGI.uniq_(_val))
 
 ## Convert array of floats to array of integers. Useful for correcting parsed JSONs.
 func float_arr_to_int_arr() -> GGArray: return _w_(GGI.float_arr_to_int_arr_(_val))
+
+static func is_GGArray(x) -> bool: return x is Object && "GGArray_marker" in x && x.GGArray_marker
+
+func to_array_deep() -> Array:
+	var r = []
+	for x in _val:
+		if is_GGArray(x): x = x.to_array_deep()
+		r.push_back(x)
+	return r
 
 # TODO:
 # intersperse
