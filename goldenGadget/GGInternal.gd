@@ -62,6 +62,14 @@ func map_fn_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> Array:
 
 func map_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> Array: return map_fn_(arr, f_like_to_func(f), ctx)
 
+func map_with_index_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> Array:
+	var r:= []
+	var _f = f_like_to_func(f)
+	for i in range(arr.size()):
+		var x = arr[i]
+		r.push_back(call_f2_w_ctx(_f, x, i, ctx))
+	return r
+
 func for_each_fn_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> void: for x in arr: call_f1_w_ctx(f, x, ctx)
 
 func for_each_(arr: Array, f, ctx = _EMPTY_CONTEXT) -> void: for_each_fn_(arr, f_like_to_func(f), ctx)
@@ -149,6 +157,9 @@ func zip_(a: Array, b: Array) -> Array:
 	for i in range(0, min(a.size(), b.size())): r.push_back([a[i], b[i]])
 	return r
 
+func zip_with_index_(a: Array) -> Array:
+	return zip_(a, range(a.size()))
+
 func fst_(pair: Array): return pair[0]
 
 func snd_(pair: Array): return pair[1]
@@ -180,7 +191,7 @@ func parse_fn(expr: String) -> Array:
 func function_expr_to_script_(expr: String) -> String:
 	var parsed = parse_fn(expr); var args = parsed[0]; var op = parsed[1]; var body = parsed[2] # how I miss destructuring...
 	var retPart = "return " if op == "=>" else ""
-	var src = "func f(%s):%s%s" % [args, retPart, body]
+	var src = "tool\nfunc f(%s):%s%s" % [args, retPart, body]
 	return src
 
 var _function_cache = {}
@@ -197,6 +208,9 @@ func function_(expr: String) -> FuncRef:
 		scr = compile_script_(src)
 		_function_cache[expr] = scr
 	return funcref(scr, "f")
+
+func flip_(f):
+	return FRef1Flipped.new(f_like_to_func(f))
 
 func sample_or_null_(arr: Array):
 	if is_empty_(arr): return null
@@ -243,9 +257,22 @@ func drop_right_(xs: Array, n: int) -> Array:
 	for i in range(0, clamp(xs.size() - n, 0, xs.size())): res.push_back(xs[i])
 	return res
 
+func drop_while_(xs: Array, pred) -> Array:
+	var p = f_like_to_func(pred)
+	var res:= []
+	var dropping:= true
+	for i in range(0, xs.size()):
+		var x = xs[i]
+		if dropping: dropping = p.call_func(x)
+		if !dropping: res.push_back(x)
+	return res
+
+func drop_while_right_(xs: Array, pred) -> Array:
+	return reverse_(drop_while_(reverse_(xs), pred))
+
 func f_like_to_func(f):
 	if f is FuncRef: return f
-	elif f is CtxFRef1 || f is CtxFRef2 || f is FlowF: return f
+	elif f is CtxFRef1 || f is CtxFRef2 || f is FlowF || f is FRef1Flipped: return f
 	elif f is String: return function_(f)
 	elif f is Array: return CtxFRef1.new(f_like_to_func(f[0]), f[1])
 	crash_("Unexpected function-like input: %s" % f)
@@ -297,10 +324,15 @@ func min_(xs: Array):
 
 func average_(xs: Array):
 	if is_empty_(xs): return null
-	return float(sum_(xs)) / xs.size();
+	var s = sum_(xs)
+	if typeof(s) == TYPE_INT: s = float(s)
+	return s / xs.size();
 
 func sum_(xs: Array) -> int:
-	var r:= 0
+	if is_empty_(xs): return 0
+	var r = 0
+	if typeof(xs[0]) == TYPE_VECTOR2: r = Vector2.ZERO
+	if typeof(xs[0]) == TYPE_VECTOR3: r = Vector3.ZERO
 	for x in xs: r += x
 	return r
 
@@ -396,6 +428,7 @@ func bool_(cond: bool, on_false, on_true): if cond: return on_true; else: return
 func bool_lazy_(cond: bool, on_false, on_true): return bool_(cond, f_like_to_func(on_false), f_like_to_func(on_true)).call_func()
 
 func pause_one_(node: Node, value: bool) -> void:
+	if "GG_IGNORE_PAUSE" in node: return
 	node.set_process(!value)
 	node.set_physics_process(!value)
 	node.set_process_input(!value)
@@ -455,3 +488,29 @@ func partition_(xs: Array, pred, ctx = _EMPTY_CONTEXT) -> Array:
 	for x in xs:
 		(p if call_f1_w_ctx(pred_func, x, ctx) else n).push_back(x)
 	return [p, n]
+
+func elem_(xs: Array, y) -> bool: return xs.has(y)
+
+func not_elem_(xs: Array, y) -> bool: return !elem_(xs, y)
+
+func valid_index_(arr: Array, x: int) -> bool: return x >= 0 && x < arr.size()
+
+func debug_(x, tag:= ""):
+	var first_part:= "" if tag.empty() else "[" + tag + "]: "
+	print("%s%s" % [first_part, x])
+	return x
+
+func intersect_(xs: Array, ys: Array) -> Array:
+	var r:= []
+	for x in xs: if ys.has(x): r.push_back(x)
+	return r
+
+func union_(xs: Array, ys: Array) -> Array:
+	var r:= xs.duplicate()
+	for y in ys: if !r.has(y): r.push_back(y)
+	return r
+
+func difference_(xs: Array, ys: Array) -> Array:
+	var r:= []
+	for x in xs: if !ys.has(x): r.push_back(x)
+	return r

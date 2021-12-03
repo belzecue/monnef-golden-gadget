@@ -19,12 +19,12 @@ const GGArray_marker:= true
 ## Inner [[Array]]. Usually used to end [[GGArray]] chains.
 ## @type {Array<T>}
 ## @example `G([1, 2]).val` returns `[1, 2]`
-var val setget , _get_val
+var val: Array setget , _get_val
 
 ## Get length of the wrapped array.
 ## @type {int}
 ## @example `G([1, 2]).size` returns `2`
-var size setget , _get_size
+var size: int setget , _get_size
 
 ## Is the wrapped array empty?
 ## @type {bool}
@@ -49,6 +49,9 @@ var _w = funcref(self, "_w_")
 func _uw_(x: GGArray) -> Array: return x.val
 var _uw = funcref(self, "_uw_")
 
+# unwrap if GGA
+func _uwa_(x) -> Array: return x.val if is_GGArray(x) else x
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 ## Map every value in an array using a given function.
@@ -66,6 +69,14 @@ func map_fn(f, ctx = GGI._EMPTY_CONTEXT) -> GGArray: return _w_(GGI.map_fn_(_val
 ## @return {U}
 ## @example `G([1, 2]).map("x => x + 1").val` returns `[2, 3]`
 func map(f, ctx = GGI._EMPTY_CONTEXT) -> GGArray: return _w_(GGI.map_(_val, f, ctx))
+
+## Similar to [[map]], but the mapping function-like takes another parameter - an index.
+## @typeParam U {any} Output [[GGArray]] item type
+## @param f {FuncLike<T, U, int>} Mapping function
+## @param ctx {any} Context for function
+## @return {U}
+## @example `G([10, 20, 30]).map_with_index("x, i => x * i").val` returns `[0, 20, 60]` (`[10 * 0, 20 * 1, 30 * 2]`)
+func map_with_index(f, ctx = GGI._EMPTY_CONTEXT) -> GGArray: return _w_(GGI.map_with_index_(_val, f, ctx))
 
 ## Map an outer method (method of one specific object, usually one from which call originates - `self`)
 func map_out_mtd(obj: Object, method_name: String, ctx = GGI._EMPTY_CONTEXT) -> GGArray:
@@ -283,6 +294,9 @@ func sort_with(map_f: FuncRef) -> GGArray: return _w_(GGI.sort_with_(_val, map_f
 ## @example `G([1]).zip(["a", "b"]).val` returns `[[1, "a"]]`
 func zip(other: Array) -> GGArray: return _w_(GGI.zip_(_val, other))
 
+## Zip array with indexes of items.
+func zip_with_index() -> GGArray: return _w_(GGI.zip_with_index_(_val))
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 ## Does nothing, used to end a chain. Usually it's better to rather use chain-ending methods like [[for_each]] or [[to]].
@@ -334,6 +348,12 @@ func drop(n: int) -> GGArray: return _w_(GGI.drop_(_val, n))
 ## Drop (skip) n items from an end of an array.
 ## @example `G([1, 2, 3, 4, 5]).drop_right(2).val` returns `[1, 2, 3]`
 func drop_right(n: int) -> GGArray: return _w_(GGI.drop_right_(_val, n))
+
+## Keep dropping items from an array while given predicate holds.
+func drop_while(p) -> GGArray: return _w_(GGI.drop_while_(_val, p))
+
+## Keep dropping items from the end of an array while given predicate holds.
+func drop_while_right(p) -> GGArray: return _w_(GGI.drop_while_right_(_val, p))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -411,6 +431,39 @@ func group_with(f) -> GGArray: return _w_(GGI.group_with_(_val, f)).map(_w)
 ## @example `G([[1, 2], [3, 4]]).transpose()` returns `GGArray`s equivalent to `[[1, 3], [2, 4]]`
 func transpose() -> GGArray: return _w_(GGI.transpose_(_val)).map(_w)
 
+## Returns only elemens present in both input arrays.
+## Set-like inputs are assumed.
+## @typeParam U {any}
+## @param other {Array<T> | GGArray<T>}
+## @example `G([0, 1, 2]).intersect([10, 1, 20, 0]).val` returns `[0, 1]`
+## @return {GGArray<T>}
+func intersect(other) -> GGArray:
+	var o = _uwa_(other)
+	if typeof(o) != TYPE_ARRAY: GGI.crash_("intersect only accepts Array or GGArray")
+	return _w_(GGI.intersect_(_val, o))
+
+## Returns elemens present in both input arrays.
+## Set-like inputs are assumed.
+## @typeParam U {any}
+## @param other {Array<T> | GGArray<T>}
+## @example `G([0, 1, 2]).intersect([10, 1, 20, 0]).val` returns `[0, 1, 2, 10, 20]`
+## @return {GGArray<T>}
+func union(other) -> GGArray:
+	var o = _uwa_(other)
+	if typeof(o) != TYPE_ARRAY: GGI.crash_("union only accepts Array or GGArray")
+	return _w_(GGI.union_(_val, o))
+
+## Returns elemens present in first (wrapped) array, but not the second one (given as a method parameter).
+## Set-like inputs are assumed.
+## @typeParam U {any}
+## @param other {Array<T> | GGArray<T>}
+## @example `G([0, 1, 2]).intersect([10, 1, 20, 0]).val` returns `[2]`
+## @return {GGArray<T>}
+func difference(other) -> GGArray:
+	var o = _uwa_(other)
+	if typeof(o) != TYPE_ARRAY: GGI.crash_("difference only accepts Array or GGArray")
+	return _w_(GGI.difference_(_val, o))
+
 ## Wrap inner `Array`s with `GGArray`.
 func wrap() -> GGArray: return map(_w)
 
@@ -434,6 +487,19 @@ func to_array_deep() -> Array:
 		if is_GGArray(x): x = x.to_array_deep()
 		r.push_back(x)
 	return r
+
+## Does this instance contain given value?
+func elem(x) -> bool: return GGI.elem_(_val, x)
+
+## Does this instance not contain given value?
+func not_elem(x) -> bool: return GGI.not_elem_(_val, x)
+
+## Does given index exist in a wrapped array?
+func valid_index(x: int) -> bool: return GGI.valid_index_(_val, x)
+
+func debug(tag:= "") -> GGArray:
+	GGI.debug_(_val, tag)
+	return self
 
 # TODO:
 # intersperse

@@ -12,7 +12,6 @@ import { loadDeferredIFrames } from '/mnt/dev/godot/golden_gadget/.codedoc/node_
 import { smoothLoading } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/transport/smooth-loading.js';smoothLoading();
 import { tocHighlight } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/toc-highlight.js';tocHighlight();
 import { postNavSearch } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/search/post-nav/index.js';postNavSearch();
-import { reloadOnChange } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/serve/reload.js';reloadOnChange();
 import { ToCPrevNext } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/prevnext/index.js';
 import { ToCToggle } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/toggle/index.js';
 import { DarkModeSwitch } from '/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/darkmode/index.js';

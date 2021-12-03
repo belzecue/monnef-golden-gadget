@@ -8,6 +8,7 @@ All functions should be [documented](/api/index) (either in main file or wrapper
 
 | Godot        | Golden Gadget   |
 | ------------ | --------------- |
+| 3.4.0        | ~ 0.5.0         |
 | 3.1.1, 3.2.1 | ~ 0.3.0         |
 | 3.1.1        | ~ 0.2.0         |
 

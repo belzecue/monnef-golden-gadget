@@ -254,6 +254,17 @@ Get a value in a given field. If the field is missing, return `null`.
 
 ---
 
+### func <span id="merge_--GoldenGadget"></span>`merge_`(`default`: `Dictionary`, `donor`: `Dictionary`) -> `Dictionary`
+Merge two dictionaries.  
+
+**Parameters**: \
+`default`: `Dictionary` Base dictionary\
+`donor`: `Dictionary` Dictionary to be merged into base (overrides same fields)
+
+**Returns**: `Dictionary` New merged dictionary
+
+---
+
 ### func <span id="fst_--GoldenGadget"></span>`fst_`(`pair`: `Array`)
 Get a first item in a pair.  
 
@@ -286,6 +297,22 @@ Create function-like object depending on type of `f`.
 `f`: `FuncRef | String | Array<any>` 
 
 **Returns**: `FuncRef | CtxFRef1` 
+
+---
+
+### func <span id="flip_--GoldenGadget"></span>`flip_`(`f`)
+Flip arguments of given two-argument function.  
+
+**Parameters**: \
+`f`: `FuncLike<A, B, R>` 
+
+**Returns**: `FuncLike<B, A, R>` 
+
+**Examples**: \
+`GG.flip_("x, y => x - y")` has same meaning in GG as `"y, x => x - y"`\
+`G([0, 1, 2]).map("x, y => x - y", 10).val` return `[-10, -9, -8]`, in the map call the function with context is equivalent to `x => x - 10`\
+`G([0, 1, 2]).map(GG.flip_("x, y => x - y"), 10).val` return `[10, 9, 8]`, in the map call the function with context is equivalent to `x => 10 - x`\
+`G([0, 1, 2]).map(GG.flip_(GG.subtract), 10).val` returns `[10, 9, 8]`
 
 ---
 
@@ -487,6 +514,17 @@ Get recursively all children.
 
 ---
 
+### func <span id="set_node_parent_--GoldenGadget"></span>`set_node_parent_`(`child`: `Node`, `new_parent`: `Node`) -> `Node`
+Set a parent of a node. Similar to `add_child`, but allows adding nodes which already have a parent (aka reparent).  
+
+**Parameters**: \
+`child`: `Node` Node of which parent will be set\
+`new_parent`: `Node` New parent node
+
+**Returns**: `Node` Child node
+
+---
+
 ### func <span id="get_node_or_crash_--GoldenGadget"></span>`get_node_or_crash_`(`parent`, `path`) -> `Node`
 Safer `get_node` alternative which will crash when a parent, a path or a node are `null`/empty.  
 
@@ -506,6 +544,11 @@ Get a child node. If there is any problem, return `null`.
 `path`: `NodePath | String | null` Path to a child
 
 **Returns**: `Node | null` Child node or `null` on failure
+
+---
+
+### func <span id="get_nth_parent_--GoldenGadget"></span>`get_nth_parent_`(`start`: `Node`, `level`: `int`)
+Get nth parent from a node.  
 
 ---
 
@@ -821,6 +864,11 @@ Get random direction 3D vector.
 
 ---
 
+### func <span id="rand_vec2_--GoldenGadget"></span>`rand_vec2_`(`from` = `<<TODO: EFuncCall (EVarRef "Vector2") [EANeg (ELit (LInt 1)),EANeg (ELit (LInt 1))]>>`, `to` = `<<TODO: EFuncCall (EVarRef "Vector2") [ELit (LInt 1),ELit (LInt 1)]>>`) -> `Vector2`
+Get random 2D vector.  
+
+---
+
 ### func <span id="rand_sign_--GoldenGadget"></span>`rand_sign_`()
 Get randomly `1` or `-1`.  
 
@@ -839,11 +887,33 @@ Get random `float` from range [`from`, `to`].
 
 ---
 
+### func <span id="rand_float_r_--GoldenGadget"></span>`rand_float_r_`(`radius`: `float`, `center`: `float` = `0.0`) -> `float`
+Get random `float` from `center` and maximum difference of `radius`.  
+
+**Examples**: \
+`rand_float_r_(5)` may return `-2.4271` (random number from -5 to 5)
+
+---
+
 ### func <span id="rand_int_--GoldenGadget"></span>`rand_int_`(`from`: `int`, `to`: `int`) -> `int`
 Get random `int` from range [`from`, `to`] (including both endpoints).  
 
 **Examples**: \
 `rand_int_(1, 5)` may return `5`
+
+---
+
+### func <span id="randc_--GoldenGadget"></span>`randc_`() -> `Color`
+Get random opaque color (alpha set to 1).  
+
+**Returns**: `Color` 
+
+---
+
+### func <span id="randca_--GoldenGadget"></span>`randca_`() -> `Color`
+Get random color (alpha is random).  
+
+**Returns**: `Color` 
 
 ---
 
@@ -854,6 +924,32 @@ Get direction between two `Node2D`s.
 
 ### func <span id="dir_to3_--GoldenGadget"></span>`dir_to3_`(`from`: `Spatial`, `to`: `Spatial`) -> `Vector3`
 Get direction between two `Spatial`s.  
+
+---
+
+### func <span id="vec2_--GoldenGadget"></span>`vec2_`(`x`: `int`, `y` = `null`) -> `Vector2`
+Construct [Vector2](#Vector2). If second parametr is not given, use first parametr twice.  
+
+**Parameters**: \
+`x`: `int` \
+`y`: `int | null` 
+
+**Examples**: \
+`vec2_(2)` returns `Vector2(2, 2)`
+
+---
+
+### func <span id="vec3_--GoldenGadget"></span>`vec3_`(`x`: `int`, `y` = `null`, `z` = `null`) -> `Vector3`
+Construct [Vector3](#Vector3). If second and third parametr is omitted, use first parametr thrice.  
+Only allowed combinations of filled (non-null) arguments are x and x+y+z, otherwise crash ensues.  
+
+**Parameters**: \
+`x`: `int` \
+`y`: `int | null` \
+`z`: `int | null` 
+
+**Examples**: \
+`vec3_(2)` returns `Vector3(2, 2, 2)`
 
 ---
 
@@ -906,9 +1002,111 @@ Returns dictionary with following fields:
 
 **Returns**: `Dictionary` 
 
+---
+
+### <span id="in_editor--GoldenGadget"></span>var `in_editor`: `bool`
+Is code running inside editor (in `tool` mode)?  
+
+---
+
+### func <span id="load_relative_--GoldenGadget"></span>`load_relative_`(`script`: `Node`, `path`: `String`)
+Load resource relative to directory of given script  
+
+---
+
+### func <span id="anim_get_progress_--GoldenGadget"></span>`anim_get_progress_`(`anim`: `AnimatedSprite`) -> `float`
+Get progress of current animation in AnimatedSprite  
+
+**Returns**: `float` Progress of animation, interval [0, 1)
+
+---
+
+### func <span id="pick_--GoldenGadget"></span>`pick_`(`obj`, `fields`: `Array`) -> `Dictionary`
+Contruct a new dictionary from given list of fields of a given object/dictionary.  
+
+**Parameters**: \
+`obj`: `Object | Dictionary` \
+`fields`: `Array<String>` 
+
+**Returns**: `Dictionary` 
+
+---
+
+### func <span id="assign_fields_--GoldenGadget"></span>`assign_fields_`(`target`, `source`) -> `void`
+Assign all fields from `source` to `target`.  
+
+**Parameters**: \
+`target`: `Object | Dictionary` 
+
+**Returns**: `void` 
+
+---
+
+### func <span id="omit_--GoldenGadget"></span>`omit_`(`obj`, `fields`: `Array`) -> `Dictionary`
+Create a new dictionary by copying all fields except those in given `fields` parameter.  
+
+**Parameters**: \
+`obj`: `Object | Dictionary` \
+`fields`: `Array<String>` 
+
+**Returns**: `Dictionary` 
+
+---
+
+### func <span id="input_event_to_dict_--GoldenGadget"></span>`input_event_to_dict_`(`e`: `InputEvent`)
+Convert InputEvent to Dictionary.  
+Supports: InputEventKey, InputEventJoypadButton, InputEventJoypadMotion and InputEventMouseButton  
+
+**Parameters**: \
+`e`: `InputEvent | null` 
+
+**Returns**: `Dictionary | null` 
+
+---
+
+### func <span id="dict_to_input_event_--GoldenGadget"></span>`dict_to_input_event_`(`x`)
+Convert Dictionary to InputEvent (see `input_event_to_dict_`).  
+
+**Parameters**: \
+`x`: `Dictionary | null` 
+
+**Returns**: `InputEvent | null` 
+
+---
+
+### func <span id="fmt_input_event_--GoldenGadget"></span>`fmt_input_event_`(`e`: `InputEvent`, `options` = `<<TODO: ELit (LDictionary [])>>`) -> `String`
+Format `InputEvent`. Formatting strings and translation function can be customized.  
+Optional options:  
+* `translate_func` {FuncLike<String, String>} - translation function  
+* `fmt_str_key` {String}                      - formatting string for keyboard keys  
+* `fmt_str_joypad_button` {String}            - formatting string for gamepad buttons  
+* `fmt_str_joypad_motion` {String}            - formatting string for gamepad axis  
+
+**Parameters**: \
+`e`: `InputEvent` \
+`options`: `Dictionary` 
+
+---
+
+### func <span id="shift_hue_--GoldenGadget"></span>`shift_hue_`(`c`: `Color`, `n`: `float`) -> `Color`
+Shift given color by specified amount.  
+
+**Parameters**: \
+`c`: `Color` \
+`n`: `float` In range of [-1 .. 1]. If you have degrees then divide it by 360, e.g. `60.0 / 360`.
+
+**Examples**: \
+`GG.shift_hue_(Color.red, 0.5)` returns equivalent of `Color.cyan`
+
+---
+
+### func <span id="debug_--GoldenGadget"></span>`debug_`(`x`, `tag` = `""`)
+Print given data, optionally with a tag. Returns given data.  
+Useful for debuging purposes, e.g. in pipe.  
+
 
 <br>
 
 ---
 
-Generated by [GodoDoc](https://gitlab.com/monnef/gododoc) at 15. 11. 2020  6:05.
+Generated by [GodoDoc](https://gitlab.com/monnef/gododoc) at  3. 12. 2021 16:37.

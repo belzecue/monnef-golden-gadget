@@ -9,7 +9,7 @@
 # Golden Gadget
 # GDScript utility library focused on functional programming (FP)
 #
-# version: 0.4.0 (2019-2020)
+# version: 0.5.0 (2019-2021)
 # author:  monnef
 # license: MIT
 # repo:    https://gitlab.com/monnef/golden-gadget
@@ -268,6 +268,16 @@ var  get_fld_or_else = funcref(self, "get_fld_or_else_")
 func get_fld_or_null_(obj, field_name): return GGI.get_fld_or_null_(obj, field_name)
 var  get_fld_or_null = funcref(self, "get_fld_or_null_")
 
+## Merge two dictionaries.
+## @param default {Dictionary} Base dictionary
+## @param donor {Dictionary} Dictionary to be merged into base (overrides same fields)
+## @return {Dictionary} New merged dictionary
+func merge_(default: Dictionary, donor: Dictionary) -> Dictionary:
+	var r = default.duplicate()
+	for k in donor.keys(): r[k] = donor[k]
+	return r
+var merge = funcref(self, "merge_")
+
 ## Get a first item in a pair.
 func fst_(pair: Array): return GGI.fst_(pair)
 var fst = funcref(self, "fst_")
@@ -293,6 +303,16 @@ var compile_function = funcref(self, "compile_function_")
 ## @param f {FuncRef | String | Array<any>}
 ## @return {FuncRef | CtxFRef1}
 func F_(f): return GGI.f_like_to_func(f)
+
+## Flip arguments of given two-argument function.
+## @param f {FuncLike<A, B, R>}
+## @return {FuncLike<B, A, R>}
+## @example `GG.flip_("x, y => x - y")` has same meaning in GG as `"y, x => x - y"`
+## @example `G([0, 1, 2]).map("x, y => x - y", 10).val` return `[-10, -9, -8]`, in the map call the function with context is equivalent to `x => x - 10`
+## @example `G([0, 1, 2]).map(GG.flip_("x, y => x - y"), 10).val` return `[10, 9, 8]`, in the map call the function with context is equivalent to `x => 10 - x`
+## @example `G([0, 1, 2]).map(GG.flip_(GG.subtract), 10).val` returns `[10, 9, 8]`
+func flip_(f): return GGI.flip_(f)
+var flip = funcref(self, "flip_")
 
 ## Get keys of `Dictionary` or `Object`.
 ## @param obj {Dictionary | Object}
@@ -499,12 +519,23 @@ func get_children_rec_(parent: Node) -> Array:
 	return arr(children).map("x => [x]").append(arr(children).map(get_children_rec).flatten_raw().val).flatten_raw().val
 var get_children_rec = funcref(self, "get_children_rec_")
 
+## Set a parent of a node. Similar to `add_child`, but allows adding nodes which already have a parent (aka reparent).
+## @param child {Node}      Node of which parent will be set
+## @param new_parent {Node} New parent node
+## @return {Node}           Child node
+func set_node_parent_(child: Node, new_parent: Node) -> Node:
+	if child.get_parent(): child.get_parent().remove_child(child)
+	new_parent.add_child(child)
+	return child
+var set_node_parent = funcref(self, "set_node_parent_")
+
 ## Safer `get_node` alternative which will crash when a parent, a path or a node are `null`/empty.
 ## @param parent {Node | null}    Of which node we want to retrieve a child
 ## @param path {NodePath | null}  Path to a child
 ## @return {Node | null}          Child node or `null` on failure
 func get_node_or_crash_(parent, path) -> Node:
-	assert_(path != null && !path.is_empty(), "missing path")
+	var is_node_path = path is NodePath
+	assert_(path != null && ((is_node_path && !path.is_empty()) || !is_node_path), "missing path")
 	assert_(parent != null, "missing parent node")
 	var node = parent.get_node(path)
 	assert_(node != null, "missing child")
@@ -520,6 +551,14 @@ func get_node_or_null_(parent, path):
 	if parent == null: return null
 	return parent.get_node_or_null(path)
 var get_node_or_null = funcref(self, "get_node_or_null_")
+
+## Get nth parent from a node.
+func get_nth_parent_(start: Node, level: int):
+	if level < 1: return null
+	var c = start
+	for i in range(level): c = c.get_parent()
+	return c
+var get_nth_parent = funcref(self, "get_nth_parent_")
 
 ## Create a `Timer` node, connect timeout signal to the method and start.
 ## @param on {Node} Parent node for `Timer`, contains callback method
@@ -723,6 +762,9 @@ var rand_dir2 = funcref(self, "rand_dir2_")
 func rand_dir3_() -> Vector3: return Vector3(randf() - .5, randf() - .5, randf() - .5).normalized()
 var rand_dir3 = funcref(self, "rand_dir3_")
 
+## Get random 2D vector.
+func rand_vec2_(from:= Vector2(-1, -1), to:= Vector2(1, 1)) -> Vector2: return Vector2(rand_float_(from.x, to.x), rand_float_(from.y, to.y))
+
 ## Get randomly `1` or `-1`.
 func rand_sign_(): return -1 if randf() < .5 else 1
 var rand_sign = funcref(self, "rand_sign_")
@@ -737,11 +779,27 @@ func rand_float_(from: float, to: float) -> float:
 	return from + randf() * (to - from)
 var rand_float = funcref(self, "rand_float_")
 
+## Get random `float` from `center` and maximum difference of `radius`.
+## @example `rand_float_r_(5)` may return `-2.4271` (random number from -5 to 5)
+func rand_float_r_(radius: float, center: float = 0.0) -> float:
+	return rand_float_(center - radius, center + radius)
+var rand_float_r = funcref(self, "rand_float_")
+
 ## Get random `int` from range [`from`, `to`] (including both endpoints).
 ## @example `rand_int_(1, 5)` may return `5`
 func rand_int_(from: int, to: int) -> int:
 	return from + randi() % (to - from + 1)
 var rand_int = funcref(self, "rand_int_")
+
+## Get random opaque color (alpha set to 1).
+## @return {Color}
+func randc_() -> Color: return Color(randf(), randf(), randf(), 1)
+var randc = funcref(self, "randc_")
+
+## Get random color (alpha is random).
+## @return {Color}
+func randca_() -> Color: return Color(randf(), randf(), randf(), randf())
+var randca = funcref(self, "randca_")
 
 ## Get direction between two `Node2D`s.
 func dir_to2_(from: Node2D, to: Node2D) -> Vector2: return (to.global_position - from.global_position).normalized()
@@ -750,6 +808,27 @@ var dir_to2 = funcref(self, "dir_to2_")
 ## Get direction between two `Spatial`s.
 func dir_to3_(from: Spatial, to: Spatial) -> Vector3: return (to.global_transform.origin - from.global_transform.origin).normalized()
 var dir_to3 = funcref(self, "dir_to3_")
+
+## Construct [[Vector2]]. If second parametr is not given, use first parametr twice.
+## @param x {int}
+## @param y {int | null}
+## @example `vec2_(2)` returns `Vector2(2, 2)`
+func vec2_(x: int, y = null) -> Vector2:
+	if y == null: return Vector2(x, x)
+	return Vector2(x, y)
+var vec2 = funcref(self, "vec2_")
+
+## Construct [[Vector3]]. If second and third parametr is omitted, use first parametr thrice.
+## Only allowed combinations of filled (non-null) arguments are x and x+y+z, otherwise crash ensues.
+## @param x {int}
+## @param y {int | null}
+## @param z {int | null}
+## @example `vec3_(2)` returns `Vector3(2, 2, 2)`
+func vec3_(x: int, y = null, z = null) -> Vector3:
+	if y == null && z == null: return Vector3(x, x, x)
+	assert_(y != null && z != null, "expected to either only get first argument, or all arguments. got %s, %s, %s" % [x, y, z])
+	return Vector3(x, y, z)
+var vec3 = funcref(self, "vec3_")
 
 ## Limit given integer number to specified range.
 func clampi_(value: int, min_val: int, max_val: int) -> int:
@@ -821,18 +900,234 @@ func read_json_file_or_error_(path: String) -> Dictionary:
 	return {result = res.result, error = OK}
 var read_json_file_or_error = funcref(self, "read_json_file_or_error_")
 
+## Is code running inside editor (in `tool` mode)?
+var in_editor: bool setget , get_in_editor_
+func get_in_editor_() -> bool: return Engine.editor_hint
+var get_in_editor = funcref(self, "get_in_editor_")
+
+func draw_cross_(obj: CanvasItem, center: Vector2, radius: float, color:= Color.cyan, width:= 1.0) -> void:
+	var ox:= Vector2(radius, 0); var oy:= Vector2(0, radius)
+	obj.draw_line(center - ox, center + ox, color, width)
+	obj.draw_line(center - oy, center + oy, color, width)
+var draw_cross = funcref(self, "draw_cross_")
+
+func draw_ellipse_(obj: CanvasItem, center: Vector2, radius: Vector2, color:= Color.cyan, width:= 1.0, filled:= true, points_count:= 32) -> void:
+	var points:= []
+	var step:= 360.0 / points_count
+	var d:= 0.0
+	# TODO: optimize, axis-aligned ellipse is 4 symetrical
+	var points_count_processed = points_count if filled else points_count + 3
+	for i in range(points_count_processed):
+		points.push_back(Vector2(radius.x * cos(deg2rad(d)), radius.y * sin(deg2rad(d))) + center)
+		d += step
+	if filled:
+		obj.draw_polygon(points, replicate_(color, points_count))
+	else:
+		points.push_back(points[0])
+		obj.draw_polyline(points, color, width)
+var draw_ellipse = funcref(self, "draw_ellipse_")
+
+func draw_arrow_(obj: CanvasItem, pos_from: Vector2, pos_to: Vector2, color:= Color.cyan, width:= 1.0, arrow_size:= 10.0, arrow_angle:= PI / 4, point_fix_size:= 2.0) -> void:
+	obj.draw_line(pos_from, pos_to, color, width)
+	var back_line:= pos_from.direction_to(pos_to) * arrow_size
+
+	var a1_start:= pos_to
+	var a1_end:= pos_to + back_line.rotated(PI + arrow_angle)
+	a1_start -= a1_start.direction_to(a1_end) * width / point_fix_size
+	obj.draw_line(a1_start, a1_end, color, width)
+
+	var a2_start:= pos_to
+	var a2_end:= pos_to + back_line.rotated(PI - arrow_angle)
+	a2_start -= a2_start.direction_to(a2_end) * width / point_fix_size
+	obj.draw_line(a2_start, a2_end, color, width)
+
+## Load resource relative to directory of given script
+func load_relative_(script: Node, path: String):
+	return load("%s/%s" % [script.get_script().get_path().get_base_dir(), path])
+var load_relative = funcref(self, "load_relative_")
+
+## Get progress of current animation in AnimatedSprite
+## @return {float} Progress of animation, interval [0, 1)
+func anim_get_progress_(anim: AnimatedSprite) -> float:
+	var frame_count = anim.frames.get_frame_count(anim.animation)
+	return float(anim.frame) / frame_count
+
+var debug_draw_2d: GGDebugDraw2D setget , _get_debug_draw_2d
+
+func _get_debug_draw_2d() -> GGDebugDraw2D:
+	if !debug_draw_2d:
+		var i = load_relative_(self, "GGDebugDraw2D.tscn").instance()
+		get_tree().root.add_child(i)
+		debug_draw_2d = i
+	return debug_draw_2d
+
+## Contruct a new dictionary from given list of fields of a given object/dictionary.
+## @param obj {Object | Dictionary}
+## @param fields {Array<String>}
+## @return {Dictionary}
+func pick_(obj, fields: Array) -> Dictionary:
+	var r = {}
+	for k in fields: r[k] = get_fld_(obj, k)
+	return r
+var pick = funcref(self, "pick_")
+
+## Assign all fields from `source` to `target`.
+## @param target {Object | Dictionary}
+## @return {void}
+func assign_fields_(target, source) -> void:
+	for k in keys_(source):
+		target[k] = source[k]
+var assign_fields = funcref(self, "assign_fields_")
+
+## Create a new dictionary by copying all fields except those in given `fields` parameter.
+## @param obj {Object | Dictionary}
+## @param fields {Array<String>}
+## @return {Dictionary}
+func omit_(obj, fields: Array) -> Dictionary:
+	var r = {}
+	for k in keys_(obj):
+		if !fields.has(k):
+			r[k] = get_fld_(obj, k)
+	return r
+var omit = funcref(self, "omit_")
+
+const _input_event_key_fields:= ["scancode", "physical_scancode", "alt", "shift", "control", "meta", "command"]
+const _input_event_joypad_button_fields:= ["button_index"]
+const _input_event_joypad_motion_fields:= ["axis", "axis_value"]
+const _input_event_mouse_button_fields:= ["button_index"]
+
+## Convert InputEvent to Dictionary.
+## Supports: InputEventKey, InputEventJoypadButton, InputEventJoypadMotion and InputEventMouseButton
+## @param e {InputEvent | null}
+## @return {Dictionary | null}
+func input_event_to_dict_(e: InputEvent):
+	if e == null: return null
+	match e.get_class():
+		"InputEventKey":
+			return merge_(
+				pick_(e, _input_event_key_fields),
+				{ type = "key" }
+			)
+		"InputEventJoypadButton":
+			return merge_(
+				pick_(e, _input_event_joypad_button_fields),
+				{ type = "joypadButton" }
+			)
+		"InputEventJoypadMotion":
+			return merge_(
+				pick_(e, _input_event_joypad_motion_fields),
+				{ type = "joypadMotion" }
+			)
+		"InputEventMouseButton":
+			return merge_(
+				pick_(e, _input_event_mouse_button_fields),
+				{ type = "mouseButton" }
+			)
+		_: return null
+var input_event_to_dict = funcref(self, "input_event_to_dict_")
+
+## Convert Dictionary to InputEvent (see `input_event_to_dict_`).
+## @param x {Dictionary | null}
+## @return {InputEvent | null}
+func dict_to_input_event_(x):
+	if x == null: return null
+	var type = get_fld_or_null_(x, "type")
+	if type == null: return null
+	var data = omit_(x, ["type"])
+	match type:
+		"key":
+			var r:= InputEventKey.new()
+			assign_fields_(r, data)
+			return r
+		"joypadButton":
+			var r:= InputEventJoypadButton.new()
+			assign_fields_(r, data)
+			return r
+		"joypadMotion":
+			var r:= InputEventJoypadMotion.new()
+			assign_fields_(r, data)
+			return r
+		"mouseButton":
+			var r:= InputEventMouseButton.new()
+			assign_fields_(r, data)
+			return r
+var dict_to_input_event = funcref(self, "dict_to_input_event_")
+
+var fmt_input_event_tr_prefix:= "gg.controls."
+
+## Format `InputEvent`. Formatting strings and translation function can be customized.
+## Optional options:
+## * `translate_func` {FuncLike<String, String>} - translation function
+## * `fmt_str_key` {String}                      - formatting string for keyboard keys
+## * `fmt_str_joypad_button` {String}            - formatting string for gamepad buttons
+## * `fmt_str_joypad_motion` {String}            - formatting string for gamepad axis
+## @param e {InputEvent}
+## @param options {Dictionary}
+func fmt_input_event_(e: InputEvent, options:= {}) -> String:
+	var opts = merge_({
+		translate_func = "x => tr(x)",
+		fmt_str_key = "{tr_key} {key}",
+		fmt_str_joypad_button = "{tr_joypad_button} {button_number}",
+		fmt_str_joypad_motion = "{tr_joypad_axis} {axis_number} {tr_sign}",
+		fmt_str_mouse_button = "{tr_mouse_button} {tr_mouse_button_number}"
+	}, options)
+	var t = F_(opts.translate_func)
+	match e.get_class():
+		"InputEventKey":
+			var text = e.as_text()
+			# workaround of Godot returning empty string for physical keys (confimed broken in 3.4)
+			if text == "" && e.scancode == 0:
+				var tmp_e:= e.duplicate()
+				tmp_e.scancode = tmp_e.physical_scancode
+				text = tmp_e.as_text()
+			return opts.fmt_str_key.format({
+				tr_key = t.call_func(fmt_input_event_tr_prefix + "key"),
+				key = text
+			})
+		"InputEventJoypadButton":
+			return opts.fmt_str_joypad_button.format({
+				tr_joypad_button = t.call_func(fmt_input_event_tr_prefix + "joypadButton"), button_number = e.button_index
+			})
+		"InputEventJoypadMotion":
+			return opts.fmt_str_joypad_motion.format({
+				tr_joypad_axis = t.call_func(fmt_input_event_tr_prefix + "joypadAxis"),
+				axis_number = e.axis,
+				tr_sign = t.call_func(fmt_input_event_tr_prefix + "joypadAxis." + ("plus" if e.axis_value > 0 else "minus"))
+			})
+		"InputEventMouseButton":
+			var t_key_mouse_button_number = fmt_input_event_tr_prefix + "mouseButton." + str(e.button_index)
+			var tr_mouse_button_number = t.call_func(t_key_mouse_button_number)
+			if tr_mouse_button_number == t_key_mouse_button_number: tr_mouse_button_number = str(e.button_index)
+			return opts.fmt_str_mouse_button.format({
+				tr_mouse_button = t.call_func(fmt_input_event_tr_prefix + "mouseButton"),
+				tr_mouse_button_number = tr_mouse_button_number,
+			})
+		_: return t.call_func("unknown")
+var fmt_input_event = funcref(self, "fmt_input_event_")
+
+## Shift given color by specified amount.
+## @param c {Color}
+## @param n {float} In range of [-1 .. 1]. If you have degrees then divide it by 360, e.g. `60.0 / 360`.
+## @example `GG.shift_hue_(Color.red, 0.5)` returns equivalent of `Color.cyan`
+func shift_hue_(c: Color, n: float) -> Color:
+	var h:= c.h + n
+	if h < 0: h += 1
+	return c.from_hsv(h, c.s, c.v)
+var shift_hue = funcref(self, "shift_hue_")
+
+## Print given data, optionally with a tag. Returns given data.
+## Useful for debuging purposes, e.g. in pipe.
+func debug_(x, tag:= ""): return GGI.debug_(x, tag)
+var debug = funcref(self, "debug_")
+
+func print_(x): print(x)
+var print__ = funcref(self, "print_")
+
 # TODO:
-# has/elem (in hs: Eq a => a -> [a] -> Bool)
-# notElem?
-# randc / randca - random color (alpha = 1, alpha = random)?
-# print
 # format (`%` operator)
-# drop_while, drop_while_right
 # partial ap. for more parameters?
 # span/break
-# ? zip_with_index/map_with_index/map_idx/mapi?
 # ? compose
-# ? flip
 # ? obj_to_dict
 # ? flatten_deep
 
@@ -875,8 +1170,14 @@ var sort_with = funcref(self, "sort_with_")
 func zip_(arr_a: Array, arr_b: Array) -> Array: return GGI.zip_(arr_a, arr_b)
 var zip = funcref(self, "zip_")
 
+func zip_with_index_(a: Array) -> Array: return GGI.zip_with_index_(a)
+var zip_with_index = funcref(self, "zip_with_index_")
+
 func map_(arr: Array, f, ctx = GGI._EMPTY_CONTEXT) -> Array: return GGI.map_(arr, f, ctx)
 var map = funcref(self, "map_")
+
+func map_with_index_(arr: Array, f, ctx = GGI._EMPTY_CONTEXT) -> Array: return GGI.map_with_index_(arr, f, ctx)
+var map_with_index = funcref(self, "map_with_index_")
 
 func for_each_(arr: Array, f, ctx = GGI._EMPTY_CONTEXT) -> void: GGI.for_each_(arr, f, ctx)
 var for_each = funcref(self, "for_each_")
@@ -929,6 +1230,12 @@ var drop = funcref(self, "drop_")
 func drop_right_(xs: Array, n: int) -> Array: return GGI.drop_right_(xs, n)
 var drop_right = funcref(self, "drop_right_")
 
+func drop_while_(xs: Array, pred) -> Array: return GGI.drop_while_(xs, pred)
+var drop_while = funcref(self, "drop_while_")
+
+func drop_while_right_(xs: Array, pred) -> Array: return GGI.drop_while_right_(xs, pred)
+var drop_while_right = funcref(self, "drop_while_right_")
+
 # reverse (invert) array
 func reverse_(xs: Array) -> Array: return GGI.reverse_(xs)
 var reverse = funcref(self, "reverse_")
@@ -980,8 +1287,26 @@ var group_with = funcref(self, "group_with_")
 func transpose_(xs: Array) -> Array: return GGI.transpose_(xs)
 var transpose = funcref(self, "transpose_")
 
+func intersect_(xs: Array, ys: Array) -> Array: return GGI.intersect_(xs, ys)
+var intersect = funcref(self, "intersect_")
+
+func union_(xs: Array, ys: Array) -> Array: return GGI.union_(xs, ys)
+var union = funcref(self, "union_")
+
+func difference_(xs: Array, ys: Array) -> Array: return GGI.difference_(xs, ys)
+var difference = funcref(self, "difference_")
+
 func nub_(xs: Array) -> Array: return GGI.nub_(xs)
 var nub = funcref(self, "nub_")
 
 func uniq_(xs: Array) -> Array: return GGI.uniq_(xs)
 var uniq = funcref(self, "uniq_")
+
+func elem_(arr: Array, x) -> bool: return GGI.elem_(arr, x)
+var elem = funcref(self, "elem_")
+
+func not_elem_(arr: Array, x) -> bool: return GGI.not_elem_(arr, x)
+var not_elem = funcref(self, "not_elem_")
+
+func valid_index_(arr: Array, x) -> bool: return GGI.valid_index_(arr, x)
+var valid_index = funcref(self, "valid_index_")

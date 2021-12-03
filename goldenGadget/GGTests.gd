@@ -9,11 +9,18 @@ func F(f): return GG.F_(f)
 const t = true
 const f = false
 
+var _skip_tests_triggering_godots_spam_bug = false
+
+func _init(options: Dictionary = {}) -> void:
+	_skip_tests_triggering_godots_spam_bug = GG.get_fld_or_else_(options, "skip_tests_triggering_godots_spam_bug", false)
+
 func run() -> void:
+	print("[GG] Golden Gadget Tests: START")
 	var start = OS.get_ticks_msec()
 	randomize()
 	_test_wrap()
 	_test_map()
+	_test_map_with_index()
 	_test_for_each()
 	_test_join()
 	_test_filter()
@@ -29,6 +36,7 @@ func run() -> void:
 	_test_sort()
 	_test_rand()
 	_test_object()
+	_test_merge()
 	_test_pairs()
 	_test_function_utils()
 	_test_compile_script()
@@ -47,10 +55,18 @@ func run() -> void:
 	_test_batch_field_access()
 	_test_grouping()
 	_test_uniq()
+	_test_elem()
+	_test_not_elem()
+	_test_valid_index()
 	_test_transpose()
+	_test_set_operations()
 	_test_format()
 	_test_cmd_args()
 	_test_json_reading()
+	_test_vector_utils()
+	_test_input_event_dict()
+	_test_color()
+	_test_debug()
 	var stop = OS.get_ticks_msec()
 	print("[GG] Golden Gadget Tests: SUCCESS in %.3fs (%s - %s)" % [(stop - start)/1000.0, start, stop])
 
@@ -132,6 +148,11 @@ func _test_map() -> void:
 
 	# map_fld
 	_assert(G([{name = "Spock"}, {name = "Scotty"}]).map_fld("name").val, ["Spock", "Scotty"])
+
+func _test_map_with_index() -> void:
+	_assert(GG.map_with_index_([], "x, i => x * i"), [])
+	_assert(GG.map_with_index_([10, 20, 30], "x, i => x * i"), [0, 20, 60])
+	_assert(G([10, 20, 30]).map_with_index("x, i => x * i").val, [0, 20, 60])
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -534,6 +555,17 @@ func _test_array() -> void:
 	_test_func_a(zip_cases, funcref(GG, "zip_"))
 	_test_arr_wrapped_func_a(zip_cases, "zip")
 
+	# zip_with_index
+	var zip_with_index_cases = [
+		[[], []],
+		[[5], [[5, 0]]],
+		[[5, 6, 7], [[5, 0], [6, 1], [7, 2]]],
+		[[true, false], [[true, 0], [false, 1]]]
+	]
+	_test_func_a(zip_with_index_cases, GG.zip_with_index)
+	_test_func_a(zip_with_index_cases, funcref(GG, "zip_with_index_"))
+	_test_arr_wrapped_func_a(zip_with_index_cases, "zip_with_index")
+
 	# sample
 	var sample_cases = [
 		[[1], 1],
@@ -628,6 +660,33 @@ func _test_array() -> void:
 	_test_func_a(drop_right_cases, GG.drop_right)
 	_test_func_a(drop_right_cases, funcref(GG, "drop_right_"))
 	_test_arr_wrapped_func_a(drop_right_cases, "drop_right")
+
+	# drop_while
+	var drop_while_cases = \
+	  [ [[], "x => x > 0", []]
+	  , [[1], "x => x > 0", []]
+	  , [[0], "x => x > 0", [0]]
+	  , [[1, 0], "x => x > 0", [0]]
+	  , [[1, 0, 2], "x => x > 0", [0, 2]]
+	  , [[0, 1, -1], "x => x > 0", [0, 1, -1]]
+	  ]
+	_test_func_a(drop_while_cases, GG.drop_while)
+	_test_func_a(drop_while_cases, funcref(GG, "drop_while_"))
+	_test_arr_wrapped_func_a(drop_while_cases, "drop_while")
+
+	# drop_while_right
+	var drop_while_right_cases = \
+	  [ [[], "x => x > 0", []]
+	  , [[1], "x => x > 0", []]
+	  , [[0], "x => x > 0", [0]]
+	  , [[1, 0], "x => x > 0", [1, 0]]
+	  , [[0, 1], "x => x > 0", [0]]
+	  , [[1, 0, 2], "x => x > 0", [1, 0]]
+	  , [[0, 1, -1], "x => x > 0", [0, 1, -1]]
+	  ]
+	_test_func_a(drop_while_right_cases, GG.drop_while_right)
+	_test_func_a(drop_while_right_cases, funcref(GG, "drop_while_right_"))
+	_test_arr_wrapped_func_a(drop_while_right_cases, "drop_while_right")
 
 	# reverse
 	var reverse_cases = \
@@ -969,6 +1028,15 @@ func _test_rand() -> void:
 	GG.assert_(rand_int_max, "rand_int max")
 	_assert(GG.rand_int_(-10, -5) <= -5, true)
 
+	# rand_float_r
+	for i in range(10000):
+		var v0:= GG.rand_float_r_(5)
+		GG.assert_(v0 >= -5, "v0 >= -5")
+		GG.assert_(v0 <= 5, "v0 <= 5")
+		var v1:= GG.rand_float_r_(5, 10)
+		GG.assert_(v1 >= 5, "v1 >= 5")
+		GG.assert_(v1 <= 15, "v1 <= 15")
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 func _test_object() -> void:
@@ -1007,7 +1075,7 @@ func _test_object() -> void:
 		[null, null],
 		[{}, []],
 		[{a = 1, b = 2}, ["a", "b"]],
-		[T0.new(2, false), ["Reference", "Script", "script", "Script Variables", "_x", "b"]]
+		[T0.new(2, false), ["Reference", "script", "Script Variables", "_x", "b"]]
 	]
 	_test_func_a(keys_cases, GG.keys)
 	_test_func_a(keys_cases, funcref(GG, "keys_"))
@@ -1021,6 +1089,47 @@ func _test_object() -> void:
 	]
 	_test_func_a(key_from_val_cases, GG.key_from_val)
 	_test_func_a(key_from_val_cases, funcref(GG, "key_from_val_"))
+
+	# pick
+	var pick_cases = [
+		[{}, [], {}],
+		[{a = 1, b = false, c = "x"}, ["a", "c"], {a = 1, c = "x"}],
+		[T0.new(2, false), ["b"], {b = false}]
+	]
+	_test_func_a(pick_cases, GG.pick)
+	_test_func_a(pick_cases, funcref(GG, "pick_"))
+
+	# omit
+	var omit_cases = [
+		[{}, [], {}],
+		[{a = 1, b = false, c = "x"}, ["a", "c"], {b = false}],
+	]
+	_test_func_a(omit_cases, GG.omit)
+	_test_func_a(omit_cases, funcref(GG, "omit_"))
+
+	# assign_fields
+	var assign_fields_case1_io1:= { a = 1, b = "x" }
+	GG.assign_fields_(assign_fields_case1_io1, { a = 3 })
+	_assert(assign_fields_case1_io1, { a = 3, b = "x" })
+
+	var assign_fields_case2:= T0.new(4, false)
+	GG.assign_fields.call_func(assign_fields_case2, { b = true })
+	_assert(assign_fields_case2.b, true)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_merge() -> void:
+	var merge_cases = [
+		[{}, {}, {}],
+		[{a = 1}, {}, {a = 1}],
+		[{}, {a = 1}, {a = 1}],
+		[{a = 1}, {b = true}, {a = 1, b = true}],
+		[{a = 1}, {a = true}, {a = true}],
+		[{a = 1}, {a = true, b = 7}, {a = true, b = 7}],
+		[{a = 1, b = false, c = "c"}, {b = true, d = 9}, {a = 1, b = true, c = "c", d = 9}],
+	]
+	_test_func_a(merge_cases, GG.merge)
+	_test_func_a(merge_cases, funcref(GG, "merge_"))
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1049,6 +1158,14 @@ func _test_function_utils() -> void:
 	_assert(GG.const_(1).call_func("Gorn"), 1)
 	_assert(GG.const__.call_func(1).call_func("Gorn"), 1)
 	_assert(GG.const_("Resistance is futile!").call_func("Resist!"), "Resistance is futile!")
+
+	var test_object:= { a = 1 }
+	_assert(GG.key_from_val_(test_object, 1), "a")
+	_assert(GG.flip_(GG.key_from_val).call_func(1, test_object), "a")
+	_assert(G([0, 1, 2]).map(GG.subtract, 10).val, [-10, -9, -8])
+	_assert(G([0, 1, 2]).map(GG.flip_(GG.subtract), 10).val, [10, 9, 8])
+	_assert(G([0, 1, 2]).map("x, y => x - y", 10).val, [-10, -9, -8])
+	_assert(G([0, 1, 2]).map(GG.flip_("x, y => x - y"), 10).val, [10, 9, 8])
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -1081,8 +1198,8 @@ func _test_lambdas() -> void:
 	]
 	_test_func_a(parse_fn_cases, funcref(GG.GGI, "parse_fn"))
 
-	_assert(GG.GGI.function_expr_to_script_("x => x"), "func f(x):return x")
-	_assert(GG.GGI.function_expr_to_script_("a: int, b: float => float(a) * b"), "func f(a: int, b: float):return float(a) * b")
+	_assert(GG.GGI.function_expr_to_script_("x => x"), "tool\nfunc f(x):return x")
+	_assert(GG.GGI.function_expr_to_script_("a: int, b: float => float(a) * b"), "tool\nfunc f(a: int, b: float):return float(a) * b")
 
 	_assert(GG.GGI.function_("x => x").call_func(1), 1)
 	_assert(GG.GGI.function_("a,b=>a*b").call_func(2, 3), 6)
@@ -1408,6 +1525,54 @@ func _test_transpose() -> void:
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+func _test_set_operations() -> void:
+	var intersect_cases:=\
+	[ [ [], [], [] ]
+	, [ [1], [], [] ]
+	, [ [], [1], [] ]
+	, [ [1], [1], [1] ]
+	, [ [true], [false, true], [true] ]
+	, [ [true, false], [false, true], [true, false] ]
+	, [ [0, 1, 2], [10, 1, 20, 0], [0, 1] ]
+	]
+	_test_func_a(intersect_cases, GG.intersect)
+	_test_func_a(intersect_cases, funcref(GG, "intersect_"))
+	_test_arr_wrapped_func_a(intersect_cases, "intersect")
+	_assert(G([1]).intersect(G([0, 1])).val, [1])
+	_assert(G([1]).intersect([0, 1]).val, [1])
+
+	var union_cases:=\
+	[ [ [], [], [] ]
+	, [ [1], [], [1] ]
+	, [ [], [1], [1] ]
+	, [ [1], [1], [1] ]
+	, [ [1, 2], [1], [1, 2] ]
+	, [ [0, 1], [1, 2], [0, 1, 2] ]
+	, [ [0, 1, 2], [10, 1, 20, 0], [0, 1, 2, 10, 20] ]
+	]
+	_test_func_a(union_cases, GG.union)
+	_test_func_a(union_cases, funcref(GG, "union_"))
+	_test_arr_wrapped_func_a(union_cases, "union")
+	_assert(G([1]).union(G([0, 1])).val, [1, 0])
+	_assert(G([1]).union([0, 1]).val, [1, 0])
+
+	var difference_cases:=\
+	[ [ [], [], [] ]
+	, [ [1], [], [1] ]
+	, [ [], [1], [] ]
+	, [ [1], [1], [] ]
+	, [ [1, 2], [1], [2] ]
+	, [ [0, 1], [1, 2], [0] ]
+	, [ [0, 1, 2], [10, 1, 20, 0], [2] ]
+	]
+	_test_func_a(difference_cases, GG.difference)
+	_test_func_a(difference_cases, funcref(GG, "difference_"))
+	_test_arr_wrapped_func_a(difference_cases, "difference")
+	_assert(G([1]).difference(G([0, 1])).val, [])
+	_assert(G([1]).difference([0, 1]).val, [])
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 func _test_uniq() -> void:
 	var nub_cases:=\
 	[ [ [], [] ]
@@ -1435,6 +1600,41 @@ func _test_uniq() -> void:
 	_test_func_a(uniq_cases, GG.uniq)
 	_test_func_a(uniq_cases, funcref(GG, "uniq_"))
 	_test_arr_wrapped_func_a(uniq_cases, "uniq")
+
+func _test_elem() -> void:
+	var elem_cases:=\
+	[ [[], 0, false]
+	, [[0], 0, true]
+	, [[0], 1, false]
+	, [range(10), 5, true]
+	]
+	_test_func_a(elem_cases, GG.elem)
+	_test_func_a(elem_cases, funcref(GG, "elem_"))
+	_test_arr_func_a(elem_cases, "elem")
+
+func _test_not_elem() -> void:
+	var not_elem_cases:=\
+	[ [[], 0, true]
+	, [[0], 0, false]
+	, [[0], 1, true]
+	, [range(10), 5, false]
+	]
+	_test_func_a(not_elem_cases, GG.not_elem)
+	_test_func_a(not_elem_cases, funcref(GG, "not_elem_"))
+	_test_arr_func_a(not_elem_cases, "not_elem")
+
+func _test_valid_index() -> void:
+	var valid_index_cases:=\
+	[ [[], 0, false]
+	, [[], -1, false]
+	, [[], 1, false]
+	, [[0], 0, true]
+	, [[0], 1, false]
+	, [[0], -1, false]
+	]
+	_test_func_a(valid_index_cases, GG.valid_index)
+	_test_func_a(valid_index_cases, funcref(GG, "valid_index_"))
+	_test_arr_func_a(valid_index_cases, "valid_index")
 
 func _test_format() -> void:
 	var format_float_2_cases = \
@@ -1496,21 +1696,122 @@ func _test_cmd_args() -> void:
 func _test_json_reading() -> void:
 	var res1 = GG.read_json_file_or_error_("res://goldenGadget/test_json_1.json")
 	_assert(res1, { result = {field = "value"}, error = OK })
+
 	var res2 = GG.read_json_file_or_error_("not_existing_file.json")
 	_assert(res2, { result = null, error = ERR_FILE_NOT_FOUND, message = "failed to open JSON file \"not_existing_file.json\": 7" })
-	var res3 = GG.read_json_file_or_error_("res://goldenGadget/test_json_2.json")
-	_assert(res3, {
-		result = null,
-		error = ERR_PARSE_ERROR,
-		error_string = "Expected 'true','false' or 'null', got 'not'.",
-		error_line = 0,
-		message = "failed to parse JSON file - 0: Expected 'true','false' or 'null', got 'not'."
-	})
+
+	if !_skip_tests_triggering_godots_spam_bug:
+		var res3 = GG.read_json_file_or_error_("res://goldenGadget/test_json_2.json")
+		_assert(res3, {
+			result = null,
+			error = ERR_PARSE_ERROR,
+			error_string = "Expected 'true','false' or 'null', got 'not'.",
+			error_line = 0,
+			message = "failed to parse JSON file - 0: Expected 'true','false' or 'null', got 'not'."
+		})
+
 	_assert(GG.read_json_file_or_error.call_func("res://goldenGadget/test_json_1.json"), { result = {field = "value"}, error = OK })
 
 	_assert(GG.read_json_file_or_null_("res://goldenGadget/test_json_1.json"), {field = "value"})
-	_assert(GG.read_json_file_or_null_("res://goldenGadget/test_json_2.json"), null)
+	if !_skip_tests_triggering_godots_spam_bug:
+		_assert(GG.read_json_file_or_null_("res://goldenGadget/test_json_2.json"), null)
 	_assert(GG.read_json_file_or_null_("not_existing_file.json"), null)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_vector_utils() -> void:
+	var vec2_cases = \
+	[ [2, Vector2(2, 2)],
+	  [1, 2, Vector2(1, 2)]
+	]
+	_test_func_a(vec2_cases, GG.vec2)
+	_test_func_a(vec2_cases, funcref(GG, "vec2_"))
+
+	var vec3_cases = \
+	[ [2, Vector3(2, 2, 2)],
+	  [1, 2, 3, Vector3(1, 2, 3)]
+	]
+	_test_func_a(vec3_cases, GG.vec3)
+	_test_func_a(vec3_cases, funcref(GG, "vec3_"))
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_input_event_dict() -> void:
+	# InputEventKey
+	var key_evt:= InputEventKey.new()
+	key_evt.scancode = 1
+	key_evt.physical_scancode = 2
+	key_evt.alt = true
+	key_evt.shift = true
+	key_evt.control = true
+	key_evt.meta = true
+	key_evt.command = true
+	var key_evt_ser = GG.input_event_to_dict_(key_evt)
+	_assert(key_evt_ser, {
+		type = "key",
+		scancode = 1,
+		physical_scancode = 2,
+		alt = true,
+		shift = true,
+		control = true,
+		meta = true,
+		command = true,
+	})
+	var key_evt_deser = GG.dict_to_input_event_(key_evt_ser)
+	_assert(key_evt_deser is InputEventKey, true)
+	_assert(key_evt_deser.scancode, 1)
+	_assert(key_evt_deser.physical_scancode, 2)
+	_assert(key_evt_deser.alt, true)
+	_assert(key_evt_deser.shift, true)
+	_assert(key_evt_deser.control, true)
+	_assert(key_evt_deser.meta, true)
+	_assert(key_evt_deser.command, true)
+
+	# InputEventJoypadButton
+	var jbut_evt:= InputEventJoypadButton.new()
+	jbut_evt.button_index = 1
+	var jbut_evt_ser = GG.input_event_to_dict_(jbut_evt)
+	_assert(jbut_evt_ser, {
+		type = "joypadButton",
+		button_index = 1
+	})
+	var jbut_evt_deser = GG.dict_to_input_event_(jbut_evt_ser)
+	_assert(jbut_evt_deser is InputEventJoypadButton, true)
+	_assert(jbut_evt_deser.button_index, 1)
+
+	# InputEventJoypadMotion
+	var jmot_evt:= InputEventJoypadMotion.new()
+	jmot_evt.axis = 1
+	jmot_evt.axis_value = 0.5
+	var jmot_evt_ser = GG.input_event_to_dict_(jmot_evt)
+	_assert(jmot_evt_ser, {
+		type = "joypadMotion",
+		axis = 1,
+		axis_value = 0.5
+	})
+	var jmot_evt_deser = GG.dict_to_input_event_(jmot_evt_ser)
+	_assert(jmot_evt_deser is InputEventJoypadMotion, true)
+	_assert(jmot_evt_deser.axis, 1)
+	_assert(jmot_evt_deser.axis_value, 0.5)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_color() -> void:
+	_assert(GG.shift_hue_(Color.magenta, 0), Color.magenta)
+	_assert(GG.shift_hue_(Color.magenta, 1), Color.magenta)
+	_assert(GG.shift_hue_(Color.magenta, -1), Color.magenta)
+	_assert(GG.shift_hue_(Color.red, 0.5), Color.cyan)
+	_assert(GG.shift_hue_(Color.red, -0.5), Color.cyan)
+	_assert(GG.shift_hue_(Color.red, 60.0/360.0), Color.yellow)
+	_assert(GG.shift_hue_(Color.red, 120.0/360.0), Color.green)
+	_assert(GG.shift_hue_(Color.red, -60.0/360.0), Color.magenta)
+	_assert(GG.shift_hue_(Color.red, -120.0/360.0), Color.blue)
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+func _test_debug() -> void:
+	_assert(GG.debug_(1, "_test_debug GG"), 1)
+	_assert(G([1]).debug("_test_debug GGA").val, [1])
 
 # ----------------------------------------------------------------------------------------------------------------------
 

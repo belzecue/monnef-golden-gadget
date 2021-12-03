@@ -64,11 +64,6 @@
       "name": "postNavSearch",
       "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/components/page/toc/search/post-nav/index.js",
       "hash": "xknflN9jSosLZL17cdqPGQ=="
-    },
-    {
-      "name": "reloadOnChange",
-      "filename": "/mnt/dev/godot/golden_gadget/.codedoc/node_modules/@codedoc/core/dist/es6/serve/reload.js",
-      "hash": "0CkLPWXmKQa0wWbyLFhwFQ=="
     }
   ],
   "components": [
