@@ -1,4 +1,9 @@
-image: codedarigan/godot_headless_ci:latest
+image: barichello/godot-ci:3.4
+
+cache:
+  key: import-assets
+  paths:
+    - .import/
 
 test:
   stage: test
